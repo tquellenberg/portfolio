@@ -268,6 +268,8 @@ public enum WidgetFactory
 
     FOLLOW_UP(Messages.SecurityListFilterDateReached, Messages.LabelCommon, FollowUpWidget::new),
 
+    DIVIDEND(Messages.LabelDividends, Messages.LabelCommon, DividendEventsWidget::new),
+
     // typo is API now!!
     VERTICAL_SPACEER(Messages.LabelVerticalSpacer, Messages.LabelCommon, VerticalSpacerWidget::new);
 
