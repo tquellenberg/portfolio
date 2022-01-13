@@ -5,12 +5,15 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Supplier;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.jface.resource.FontDescriptor;
+import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.resource.LocalResourceManager;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
@@ -105,6 +108,10 @@ public class DividendEventsWidget extends WidgetDelegate<List<DividendEventsWidg
 
     private Label title;
 
+    private Font normalFont;
+    private Font boldFont;
+    private Font italicFont;
+    
     private static final int NO_OF_COLUMNS = 4;
     private Label[] dateLabels;
     private Label[] nameLabels;
@@ -139,8 +146,17 @@ public class DividendEventsWidget extends WidgetDelegate<List<DividendEventsWidg
         GridDataFactory.fillDefaults().span(NO_OF_COLUMNS, 1).grab(true, false).applyTo(title);
 
         createTableControls(MAX_ENTRIES_TO_SHOW);
+        initFonts();
 
         return container;
+    }
+
+    private void initFonts()
+    {
+        LocalResourceManager resources = new LocalResourceManager(JFaceResources.getResources(), container);
+        normalFont = dateLabels[0].getFont();
+        boldFont = resources.createFont(FontDescriptor.createFrom(normalFont).setStyle(SWT.BOLD));
+        italicFont = resources.createFont(FontDescriptor.createFrom(normalFont).setStyle(SWT.ITALIC));
     }
 
     private void createTableControls(int size)
@@ -315,6 +331,8 @@ public class DividendEventsWidget extends WidgetDelegate<List<DividendEventsWidg
                 }
                 sharesLabels[ii].setText(noOfShares);
                 amoutLabels[ii].setText(Values.Money.format(dividendEventEntry.amountPerShare, getClient().getBaseCurrency()));
+                
+                dateLabels[ii].setFont(getFontByDate(dividendEventEntry.paydate));
             }
             else
             {
@@ -322,9 +340,22 @@ public class DividendEventsWidget extends WidgetDelegate<List<DividendEventsWidg
                 nameLabels[ii].setText(SWTHelper.EMPTY_LABEL);
                 sharesLabels[ii].setText(SWTHelper.EMPTY_LABEL);                
                 amoutLabels[ii].setText(SWTHelper.EMPTY_LABEL);
+                
+                dateLabels[ii].setFont(normalFont);
             }
         }
         container.layout(true);
+        container.update();
     }
 
+    private Font getFontByDate(LocalDate date) {
+        ;
+        if (date.isBefore(LocalDate.now())) {
+            return italicFont;
+        }
+        if (date.isEqual(LocalDate.now())) {
+            return boldFont;
+        }
+        return normalFont;
+    }
 }
