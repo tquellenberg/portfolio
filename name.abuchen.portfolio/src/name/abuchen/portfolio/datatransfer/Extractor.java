@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import name.abuchen.portfolio.Messages;
 import name.abuchen.portfolio.datatransfer.ImportAction.Context;
 import name.abuchen.portfolio.datatransfer.ImportAction.Status;
+import name.abuchen.portfolio.datatransfer.json.JsonSecurityExtractor;
 import name.abuchen.portfolio.datatransfer.pdf.AbstractPDFExtractor;
 import name.abuchen.portfolio.model.Account;
 import name.abuchen.portfolio.model.AccountTransaction;
@@ -64,7 +65,7 @@ public interface Extractor
         private Portfolio portfolioPrimary;
 
         private Portfolio portfolioSecondary;
-        
+
         private boolean investmentPlanItem = false;
 
         public abstract Annotated getSubject();
@@ -96,7 +97,7 @@ public interface Extractor
         {
             this.data = data;
         }
-        
+
         public Account getAccountPrimary()
         {
             return accountPrimary;
@@ -344,7 +345,7 @@ public interface Extractor
         {
             return entry.getAccountTransaction().getSecurity();
         }
-        
+
         @Override
         public Status apply(ImportAction action, Context context)
         {
@@ -359,8 +360,8 @@ public interface Extractor
             Status status = action.process(entry, account, portfolio);
 
             // check if message was set in DetectDuplicatesAction
-            if (Messages.InvestmentPlanItemImportToolTip.equals(status.getMessage()))  
-            { 
+            if (Messages.InvestmentPlanItemImportToolTip.equals(status.getMessage()))
+            {
                 super.setInvestmentPlanItem(true);
             }
             return status;
@@ -601,6 +602,10 @@ public interface Extractor
         else if (this instanceof IBFlexStatementExtractor)
         {
             client = ((IBFlexStatementExtractor) this).getClient();
+        }
+        else if (this instanceof JsonSecurityExtractor)
+        {
+            client = ((JsonSecurityExtractor) this).getClient();
         }
         else
         {

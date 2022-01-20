@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "type": "SecurityMetaData",
+  "securities": [
+    {
+      "isin": "US0378331005",
+      "name": "Apple Inc",
+      "currencyCode": "EUR",
+      "note": "Meine Anmerkungen...",
+      "tickerSymbol": "APC.DE",
+      "wkn": "",
+      "properties": {},
+      "attributes": {},
+      "taxonomies": [
+        {
+          "name": "Regionen (MSCI)",
+          "assignments": [
+            {
+              "key": "",
+              "path": [
+                "Regionen (MSCI)",
+                "Welt",
+                "Amerikas"
+              ],
+              "weight": 9000
+            },
+            {
+              "key": "",
+              "path": [
+                "Regionen (MSCI)",
+                "Welt",
+                "Europa"
+              ],
+              "weight": 1000
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

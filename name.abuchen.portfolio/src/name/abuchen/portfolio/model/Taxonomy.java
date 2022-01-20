@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 
 import name.abuchen.portfolio.model.Classification.Assignment;
 
@@ -21,6 +22,23 @@ public class Taxonomy
         default void visit(Classification classification, Assignment assignment)
         {
             // to be sub-classed
+        }
+    }
+
+    // To allow concise code in the form of "new AssignmentVisitor((c,a) -> {...})"
+    public static class AssignmentVisitor implements Visitor
+    {
+        private BiConsumer<Classification, Assignment> visit;
+
+        public AssignmentVisitor(BiConsumer<Classification, Assignment> visit)
+        {
+            this.visit = visit;
+        }
+
+        @Override
+        public void visit(Classification classification, Assignment assignment)
+        {
+            visit.accept(classification, assignment);
         }
     }
 
@@ -111,6 +129,25 @@ public class Taxonomy
         {
             Classification c = stack.removeFirst();
             if (id.equals(c.getId()))
+                return c;
+            stack.addAll(c.getChildren());
+        }
+
+        return null;
+    }
+
+    public Classification getClassificationByKey(String key)
+    {
+        if (key == null)
+            return null;
+
+        LinkedList<Classification> stack = new LinkedList<>();
+        stack.addAll(getRoot().getChildren());
+
+        while (!stack.isEmpty())
+        {
+            Classification c = stack.removeFirst();
+            if (key.equals(c.getKey()))
                 return c;
             stack.addAll(c.getChildren());
         }

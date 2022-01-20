@@ -1,0 +1,70 @@
+{
+	"version": "1.0",
+	"type": "SecurityMetaData",
+	"securities": [
+		{
+			"isin": "US0378331005",
+			"name": "Apple Inc",
+			"onlineId": "035ffa2ff94b49a08ede0637bdfcbc2d",
+			"currencyCode": "EUR",
+			"note": "Meine Anmerkungen...",
+			"tickerSymbol": "APC.DE",
+			"wkn": "",
+			"calendar": "de",
+			"feed": "GENERIC-JSON",
+			"feedURL": "http://sanfamnfafa.de",
+			"properties": {
+				"MARKET": {
+					"XNAS": "AAPL",
+					"XFRA": "APC",
+					"XNYS": "AAPL"
+				},
+				"FEED": {
+					"GENERIC-JSON-DATE": "abc",
+					"PORTFOLIO-REPORT-MARKETS": "[{\"marketCode\":\"XETR\",\"currencyCode\":\"EUR\",\"firstPriceDate\":{\"year\":2000,\"month\":1,\"day\":3},\"lastPriceDate\":{\"year\":2022,\"month\":2,\"day\":25}}]"
+				}
+			},
+			"attributes": {
+				"logo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAABnRSTlMA/wD/AP83WBt9AAAEYElEQVR4nO2aZ1PyQBCA/f9/RMWCBRTsimUUsddxsAsigoCIKJb3GW5keEGTS3JZxhn3Uwzmbp/bvS25dH3+cunqtAJe5Q+g09IZgEqlcnFxsbm5eXx87HEoaYCnp6ednZ2xsbHe3t6enp6lpSWPA4oCsOqojt5oHwgEuIjH4x7HFAL4+PjY39/v7+9Xqivp7u7mpseRhQAODw/7+vqatecannQ67XFkCYBUKjUwMNCsvQKIRCKvr68eB/cd4OXlZXJyEncP/C/c8e4/nwIAJycnLWuvlp/dTDD1Pr6/AG9vb9PT0y3Lr7z/8vLSyBT+AhQKhcHBwZa9i+zu7pqawl8AAn/L2hOLtre3iaqmpvAXgOip/EclL/z+/Pzc7BT+AhwcHKB6MBhkJ3BNHWF8Cq8ABPJKXdiv7b+icSaTKRaLtVqt+T6xle2RzWbv7+9LpZKXbOAGAA/O5XJE8YWFBbxipC7RaHRtbQ0PsQiO5XL59PR0ZWUlHA4PDw9jmaGhIZ5lEG7yk4vA6hjg7u5ucXGRuZVbN4u6g3KJRIJ/a9iE5b+9vaVuGx0dbeyHb5+FhG2DfXwBwNAEEMJio5z8VpQ21A4k4I2NjfX1dYzDn9ZPNQfZ2dnZfD5vGKBarbLwOko0q9JTF3Wt85QSHgmFQtjQGABrH4vF2usZ/4S5cEUdO9gDsGVxA0ntA18pL5lMGgC4urpqaUQEtCdGkcV1ErYNAM7zbTHsq/bEVloIW9W1AIjrYqorwXPOzs40tbcBwILz8/PCe9dpm28FQAlAmhTzfiYi0z0+PhoDwH+El5/E50h7GwDyrmTwIVu7eElhBUDqlfQfsq/JYu79/X1iYkLMhQCYmppiUmMAZIDx8XFJC1CtONXeBkC9xxQDoLv43QC4kItm/0cA2hHqeEkANvHz87MxAGRmZkYSgFZJswfQBVhdXZXMAyyWixdeVgC07cJ1KLvOqRdZAVCRS1pAMezt7RkDeHh4oLEQbmWCwWAmkzEDUKvVSMbyRsCRWDsDAAjloXA3HKjvZooAM28lrq+vaZGEAQJfjaXOSy4bgGq1qs50O8KAzM3NWZeo9m8lOuJFSpiX+uLb18YOALLZbMspi5gwqe23CPYA1OjUifJGUC1yuVz2CoDc3Ny0HFMLCEu2tbVlq5sWgLwRWKyRkZFisWgGACE7tp+2+yf6hZ2D84FEIiFjBGaJRCJEcMMAxGPG9ZtBHYOTQDW1cnbElEql/A6pTl9vOT4jo9z1zwgqc2k6j0sA8uLy8rImQ+MMT1N7Ik8ul3Okj5tjVpomShQLBnU6xgUFGckItXBr68MyfuWfSThOlXF50M2Gbj/za+gdjUbJQWzEfD5fKpUKhQK18dHREdjtx5XqqVAopH+oYQDgs97uUO5SqwbqX7+p1BOLxWhEf3JiEiL5JB6Ph8NhlVVI8KjOHTjdqeH1UwPciZVLJpOsN0povpnCgNiER9LptG21Yy1/X+52Wn49wD9VF5R2bnJ0MQAAAABJRU5ErkJggg\u003d\u003d"
+			},
+			"taxonomies": [
+				{
+					"name": "Regionen (MSCI)",
+					"assignments": [
+						{
+							"key": "5d14e4d2-beac-4fe8-a51c-502e087b15fc",
+							"path": [
+								"Regionen (MSCI)",
+								"Welt",
+								"Amerikas"
+							],
+							"weight": 9000
+						},
+						{
+							"key": "69e440f3-2e11-4ed9-bee3-0703723e7ca5",
+							"path": [
+								"Regionen (MSCI)",
+								"Welt",
+								"Europa"
+							],
+							"weight": 1000
+						}
+					]
+				},
+				{
+					"name": "Branchen (GICS, Sektoren)",
+					"assignments": [
+						{
+							"id": "91a2309a-2af4-4420-a2fe-1a810c575ec8",
+							"path": [
+								"Branchen (GICS, Sektoren)",
+								"Informationstechnologie"
+							],
+							"weight": 10000
+						}
+					]
+				}
+			]
+		}
+	]
+}
