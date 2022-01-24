@@ -89,9 +89,10 @@ public class Preference2EnvAddon
     {
         FormatHelper.setCalculatedQuoteDisplayPrecision(quotePrecision);
     }
-    
+
     @Inject
-    public void setTimePreset(@Preference(value = UIConstants.Preferences.PRESET_VALUE_TIME) String timePresetValue) {
+    public void setTimePreset(@Preference(value = UIConstants.Preferences.PRESET_VALUE_TIME) String timePresetValue)
+    {
         PresetValues.setTimePreset(timePresetValue);
     }
 }
