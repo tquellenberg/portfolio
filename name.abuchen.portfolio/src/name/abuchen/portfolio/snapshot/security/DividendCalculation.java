@@ -1,5 +1,6 @@
 package name.abuchen.portfolio.snapshot.security;
 
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import name.abuchen.portfolio.model.SecurityPrice;
 import name.abuchen.portfolio.money.CurrencyConverter;
 import name.abuchen.portfolio.money.Money;
 import name.abuchen.portfolio.money.MutableMoney;
+import name.abuchen.portfolio.money.Quote;
 import name.abuchen.portfolio.money.Values;
 import name.abuchen.portfolio.snapshot.security.SecurityPerformanceRecord.Periodicity;
 import name.abuchen.portfolio.util.Dates;
@@ -38,6 +40,10 @@ import name.abuchen.portfolio.util.Dates;
          * Rate of return for this payment.
          */
         public final double rateOfReturn;
+        /**
+         * Dividend per share.
+         */
+        public final long dividendPerShare;
 
         /**
          * Constructs an instance.
@@ -55,6 +61,7 @@ import name.abuchen.portfolio.util.Dates;
             LocalDateTime time = t.getDateTime();
             this.year = time.getYear();
             this.date = time.toLocalDate();
+            this.dividendPerShare = t.getDividendPerShare();
 
             // try to set rate of return, default is NaN
             double rr = Double.NaN;
@@ -92,22 +99,16 @@ import name.abuchen.portfolio.util.Dates;
     }
 
     private final List<Payment> payments = new ArrayList<>();
-    private Periodicity periodicity;
+    private Periodicity periodicity = Periodicity.NONE;
     private MutableMoney sum;
     private double rateOfReturnPerYear;
+    private Quote dividendPerShare;
 
     @Override
     public void finish(CurrencyConverter converter, List<CalculationLineItem> lineItems)
     {
-        // no payments result in no periodicity
         if (payments.isEmpty())
-        {
-            this.periodicity = Periodicity.NONE;
             return;
-        }
-
-        // default is unknown periodicity
-        this.periodicity = Periodicity.UNKNOWN;
 
         // first sort
         Collections.sort(payments, (r, l) -> r.date.compareTo(l.date));
@@ -116,11 +117,8 @@ import name.abuchen.portfolio.util.Dates;
         LocalDate firstPayment = payments.get(0).date;
         LocalDate lastPayment = payments.get(payments.size() - 1).date;
 
-        int significantCount = 0;
-        int insignificantYears = 0;
+        // calculate total sum of all payments
         double sumRateOfReturn = 0;
-
-        // first calc total sum of all payments
         for (Payment p : payments)
         {
             // add to total sum
@@ -128,12 +126,45 @@ import name.abuchen.portfolio.util.Dates;
             sumRateOfReturn += p.rateOfReturn;
         }
 
-        int years = 0;
+        int years = lastPayment.getYear() - firstPayment.getYear() + 1;
+        this.rateOfReturnPerYear = sumRateOfReturn / years;
+
+        this.periodicity = determinePeriodicity(firstPayment, lastPayment);
+        
+        this.dividendPerShare = currentYearlyDividendPerShare();
+    }
+    
+    public Quote getDividendPerShare()
+    {
+        return dividendPerShare;
+    }
+    
+    /**
+     * Sum of all payments per share in the last 12 months.
+     */
+    private Quote currentYearlyDividendPerShare() {
+        LocalDate lastPayment = payments.get(payments.size() - 1).date;
+        
+        // small offset to 365 because payments may vary slightly
+        LocalDate rangeStart = lastPayment.minusDays(365 - 20);
+
+        long yearlyDividendPerYear = payments.stream()
+            .filter(p -> p.date.isAfter(rangeStart))
+            .mapToLong(p -> p.dividendPerShare)
+            .sum();
+        
+        int factor = BigInteger.TEN.pow(Values.Quote.precision() - Values.AmountFraction.precision()).intValue();
+        return Quote.of(getTermCurrency(), yearlyDividendPerYear * factor);
+    }
+
+    private Periodicity determinePeriodicity(LocalDate firstPayment, LocalDate lastPayment)
+    {
+        int significantCount = 0;
+        int insignificantYears = 0;
 
         // now walk through individual years
         for (int year = firstPayment.getYear(); year <= lastPayment.getYear(); year++)
         {
-            years++;
             int countPerYear = 0;
             long sumPerYear = 0;
             LocalDate lastDate = null;
@@ -180,37 +211,33 @@ import name.abuchen.portfolio.util.Dates;
                 }
             }
         }
+        
+        if (significantCount <= 0)
+            return Periodicity.UNKNOWN;
 
-        this.rateOfReturnPerYear = sumRateOfReturn / years;
+        // days in current time range
+        int days = Dates.daysBetween(firstPayment, lastPayment) - (insignificantYears * 365);
+        long daysBetweenPayments = Math.round(days / (double) (significantCount - 1));
 
-        // determine periodicity?
-        if (significantCount > 0)
+        // just check payments inbetween one year
+        if (daysBetweenPayments < 430)
         {
-            // days in current time range
-            int days = Dates.daysBetween(firstPayment, lastPayment) - (insignificantYears * 365);
-            long daysBetweenPayments = Math.round(days / (double) (significantCount - 1));
-
-            // just check payments inbetween one year
-            if (daysBetweenPayments < 430)
+            if (daysBetweenPayments > 270)
             {
-                if (daysBetweenPayments > 270)
-                {
-                    this.periodicity = Periodicity.ANNUAL;
-                }
-                else if (daysBetweenPayments > 130)
-                {
-                    this.periodicity = Periodicity.SEMIANNUAL;
-                }
-                else if (daysBetweenPayments > 60)
-                {
-                    this.periodicity = Periodicity.QUARTERLY;
-                }
-                else if (daysBetweenPayments > 20)
-                {
-                    this.periodicity = Periodicity.MONTHLY;
-                }
+                return Periodicity.ANNUAL;
             }
+            else if (daysBetweenPayments > 130)
+            {
+                return Periodicity.SEMIANNUAL;
+            }
+            else if (daysBetweenPayments > 60)
+            {
+                return Periodicity.QUARTERLY;
+            }
+            else if (daysBetweenPayments > 20)
+            { return Periodicity.MONTHLY; }
         }
+        return Periodicity.UNKNOWN;
     }
 
     public LocalDate getLastDividendPayment()

@@ -17,6 +17,8 @@ import name.abuchen.portfolio.model.PortfolioTransaction;
 import name.abuchen.portfolio.model.PortfolioTransaction.Type;
 import name.abuchen.portfolio.model.Security;
 import name.abuchen.portfolio.money.CurrencyConverter;
+import name.abuchen.portfolio.money.Quote;
+import name.abuchen.portfolio.money.Values;
 import name.abuchen.portfolio.snapshot.security.SecurityPerformanceRecord.Periodicity;
 
 @SuppressWarnings("nls")
@@ -35,19 +37,24 @@ public class DividendCalculationTest
     }
 
     /**
-     * Creates a dividend payment of 100$ with 10Shares -> 10$/Share
+     * Creates a dividend payment of 100$ with 10 Shares -> 10$/Share
      * 
      * @param date
      * @return
      */
     public CalculationLineItem createDividendTransaction(LocalDateTime date)
     {
+        return createDividendTransaction(date, 100L, 10);
+    }
+
+    private CalculationLineItem createDividendTransaction(LocalDateTime date, long amount, int shares)
+    {
         AccountTransaction t = new AccountTransaction();
         t.setType(AccountTransaction.Type.DIVIDENDS);
         t.setSecurity(security);
         t.setDateTime(date);
-        t.setAmount(100L);
-        t.setShares(10);
+        t.setAmount(Values.Amount.factorize(amount));
+        t.setShares(Values.Share.factorize(shares));
         t.setCurrencyCode(security.getCurrencyCode());
 
         return CalculationLineItem.of(account, t);
@@ -176,6 +183,24 @@ public class DividendCalculationTest
     }
 
     @Test
+    public void dividendPerShareTest() {
+        List<CalculationLineItem> transactions = new ArrayList<>();
+        
+        transactions.add(createDividendTransaction(LocalDateTime.of(2017, 07, 15, 12, 00)));
+        transactions.add(createDividendTransaction(LocalDateTime.of(2017, 10, 15, 12, 00)));
+        transactions.add(createDividendTransaction(LocalDateTime.of(2018, 01, 15, 12, 00)));
+        transactions.add(createDividendTransaction(LocalDateTime.of(2018, 04, 15, 12, 00)));
+        transactions.add(createDividendTransaction(LocalDateTime.of(2018, 07, 15, 12, 00)));
+        transactions.add(createDividendTransaction(LocalDateTime.of(2018, 10, 15, 12, 00)));
+
+        DividendCalculation dividends = Calculation.perform(DividendCalculation.class, converter, security,
+                        transactions);
+        
+        Quote dividendPerShare = dividends.getDividendPerShare();
+        System.out.println(dividendPerShare);
+    }
+    
+    @Test
     public void rateOfReturnCalculationTest()
     {
 
@@ -184,7 +209,8 @@ public class DividendCalculationTest
 
         transactions.add(CalculationLineItem.of(new Portfolio(),
                         new PortfolioTransaction(LocalDateTime.of(2019, 01, 14, 12, 00), security.getCurrencyCode(),
-                                        1000L, security, 10L, Type.BUY, 0L, 0L)));
+                                        Values.Amount.factorize(1000L), security, 
+                                        Values.Share.factorize(10L), Type.BUY, 0L, 0L)));
         transactions.add(createDividendTransaction(LocalDateTime.of(2019, 01, 15, 12, 00)));
         transactions.add(createDividendTransaction(LocalDateTime.of(2020, 01, 15, 12, 00)));
 

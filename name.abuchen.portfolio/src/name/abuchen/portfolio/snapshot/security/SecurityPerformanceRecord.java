@@ -207,6 +207,12 @@ public final class SecurityPerformanceRecord implements Adaptable, TrailProvider
      */
     private double rateOfReturnPerYear;
 
+    
+    /**
+     * dividend per share in the last 12 months
+     */
+    private Quote dividendPerShare;
+    
     /**
      * market value - fifo cost of shares held
      * {@link #calculateFifoAndMovingAverageCosts()}
@@ -407,6 +413,15 @@ public final class SecurityPerformanceRecord implements Adaptable, TrailProvider
     {
         return this.rateOfReturnPerYear;
     }
+    
+    public Quote getDividendPerShare()
+    {
+        return dividendPerShare;
+    }
+    
+    public double getDividendYoC() {
+        return sharesHeld > 0 ? (double) dividendPerShare.getAmount() / (double) fifoCostPerSharesHeld.getAmount() : 0;
+    }
 
     public double getTotalRateOfReturnDiv()
     {
@@ -595,6 +610,7 @@ public final class SecurityPerformanceRecord implements Adaptable, TrailProvider
         this.dividendEventCount = dividends.getNumOfEvents();
         this.lastDividendPayment = dividends.getLastDividendPayment();
         this.rateOfReturnPerYear = dividends.getRateOfReturnPerYear();
+        this.dividendPerShare = dividends.getDividendPerShare();
     }
 
     private void calculatePeriodicity(Client client, CurrencyConverter converter)

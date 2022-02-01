@@ -810,6 +810,39 @@ public class SecuritiesPerformanceView extends AbstractFinanceView implements Re
         column.setSorter(ColumnViewerSorter.create(SecurityPerformanceRecord.class, "totalRateOfReturnDiv")); //$NON-NLS-1$
         recordColumns.addColumn(column);
 
+        // aktuelle Jahres-Dividende pro Wertpapier
+        column = new Column("divPerYear", "Jahresdividende", SWT.RIGHT, 80); //$NON-NLS-1$
+        column.setGroupLabel(Messages.GroupLabelDividends);
+        column.setDescription("Jahres-Dividende pro Wertpapier");
+        column.setVisible(false);
+        column.setLabelProvider(new ColumnLabelProvider()
+        {
+            @Override
+            public String getText(Object r)
+            {
+                return Values.Quote.formatNonZero(((SecurityPerformanceRecord) r).getDividendPerShare(),
+                                getClient().getBaseCurrency());
+            }
+        });
+        column.setSorter(ColumnViewerSorter.create(SecurityPerformanceRecord.class, "dividendPerShare")); //$NON-NLS-1$
+        recordColumns.addColumn(column);
+
+        // YoC = (aktuelle Jahres-Dividende pro Aktie) / (FIFO Kosten pro Aktie)
+        column = new Column("YoC", "YoC - Div/Kosten", SWT.RIGHT, 80); //$NON-NLS-1$
+        column.setGroupLabel(Messages.GroupLabelDividends);
+        column.setDescription("Jährlicher Dividendenertrag in Relation zum Einstandskurs");
+        column.setVisible(false);
+        column.setLabelProvider(new ColumnLabelProvider()
+        {
+            @Override
+            public String getText(Object r)
+            {
+                return Values.Percent2.formatNonZero(((SecurityPerformanceRecord) r).getDividendYoC());
+            }
+        });
+        column.setSorter(ColumnViewerSorter.create(SecurityPerformanceRecord.class, "dividendYoC")); //$NON-NLS-1$
+        recordColumns.addColumn(column);
+        
         // Rendite insgesamt, nach gleitendem Durchschnitt
         column = new Column("d%mvavg", Messages.ColumnDividendMovingAverageTotalRateOfReturn, SWT.RIGHT, 80); //$NON-NLS-1$
         column.setGroupLabel(Messages.GroupLabelDividends);
