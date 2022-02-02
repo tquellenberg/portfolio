@@ -19,6 +19,9 @@ import name.abuchen.portfolio.util.Dates;
 
 /* package */class DividendCalculation extends Calculation
 {
+    private static final int AMOUNT_FRACTION_TO_QUOTE = BigInteger.TEN
+                    .pow(Values.Quote.precision() - Values.AmountFraction.precision()).intValue();
+
     /**
      * A dividend payment.
      */
@@ -43,7 +46,7 @@ import name.abuchen.portfolio.util.Dates;
         /**
          * Dividend per share.
          */
-        public final long dividendPerShare;
+        public final Quote dividendPerShare;
 
         /**
          * Constructs an instance.
@@ -61,7 +64,9 @@ import name.abuchen.portfolio.util.Dates;
             LocalDateTime time = t.getDateTime();
             this.year = time.getYear();
             this.date = time.toLocalDate();
-            this.dividendPerShare = t.getDividendPerShare();
+            Quote dividendPerShare = Quote.of(t.getGrossValue().getCurrencyCode(),
+                            t.getDividendPerShare() * AMOUNT_FRACTION_TO_QUOTE);
+            this.dividendPerShare = converter.convert(t.getDateTime().toLocalDate(), dividendPerShare);
 
             // try to set rate of return, default is NaN
             double rr = Double.NaN;
@@ -102,7 +107,7 @@ import name.abuchen.portfolio.util.Dates;
     private Periodicity periodicity = Periodicity.NONE;
     private MutableMoney sum;
     private double rateOfReturnPerYear;
-    private Quote dividendPerShare;
+    private Quote yearlyDividendPerShare;
 
     @Override
     public void finish(CurrencyConverter converter, List<CalculationLineItem> lineItems)
@@ -130,31 +135,29 @@ import name.abuchen.portfolio.util.Dates;
         this.rateOfReturnPerYear = sumRateOfReturn / years;
 
         this.periodicity = determinePeriodicity(firstPayment, lastPayment);
-        
-        this.dividendPerShare = currentYearlyDividendPerShare();
+
+        this.yearlyDividendPerShare = currentYearlyDividendPerShare(converter);
     }
-    
-    public Quote getDividendPerShare()
+
+    public Quote getYearlyDividendPerShare()
     {
-        return dividendPerShare;
+        return yearlyDividendPerShare;
     }
-    
+
     /**
      * Sum of all payments per share in the last 12 months.
      */
-    private Quote currentYearlyDividendPerShare() {
+    private Quote currentYearlyDividendPerShare(CurrencyConverter converter)
+    {
         LocalDate lastPayment = payments.get(payments.size() - 1).date;
-        
+
         // small offset to 365 because payments may vary slightly
         LocalDate rangeStart = lastPayment.minusDays(365 - 20);
 
-        long yearlyDividendPerYear = payments.stream()
-            .filter(p -> p.date.isAfter(rangeStart))
-            .mapToLong(p -> p.dividendPerShare)
-            .sum();
-        
-        int factor = BigInteger.TEN.pow(Values.Quote.precision() - Values.AmountFraction.precision()).intValue();
-        return Quote.of(getTermCurrency(), yearlyDividendPerYear * factor);
+        long yearlyDividendPerYear = payments.stream().filter(p -> p.date.isAfter(rangeStart))
+                        .map(p -> converter.convert(p.date, p.dividendPerShare)).mapToLong(q -> q.getAmount()).sum();
+
+        return Quote.of(getTermCurrency(), yearlyDividendPerYear);
     }
 
     private Periodicity determinePeriodicity(LocalDate firstPayment, LocalDate lastPayment)
@@ -211,7 +214,7 @@ import name.abuchen.portfolio.util.Dates;
                 }
             }
         }
-        
+
         if (significantCount <= 0)
             return Periodicity.UNKNOWN;
 
@@ -235,7 +238,9 @@ import name.abuchen.portfolio.util.Dates;
                 return Periodicity.QUARTERLY;
             }
             else if (daysBetweenPayments > 20)
-            { return Periodicity.MONTHLY; }
+            {
+                return Periodicity.MONTHLY;
+            }
         }
         return Periodicity.UNKNOWN;
     }

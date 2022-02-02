@@ -419,7 +419,8 @@ public final class SecurityPerformanceRecord implements Adaptable, TrailProvider
         return dividendPerShare;
     }
     
-    public double getDividendYoC() {
+    public double getDividendYoC()
+    {
         return sharesHeld > 0 ? (double) dividendPerShare.getAmount() / (double) fifoCostPerSharesHeld.getAmount() : 0;
     }
 
@@ -610,7 +611,7 @@ public final class SecurityPerformanceRecord implements Adaptable, TrailProvider
         this.dividendEventCount = dividends.getNumOfEvents();
         this.lastDividendPayment = dividends.getLastDividendPayment();
         this.rateOfReturnPerYear = dividends.getRateOfReturnPerYear();
-        this.dividendPerShare = dividends.getDividendPerShare();
+        this.dividendPerShare = dividends.getYearlyDividendPerShare();
     }
 
     private void calculatePeriodicity(Client client, CurrencyConverter converter)
