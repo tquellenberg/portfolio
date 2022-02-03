@@ -104,7 +104,7 @@ import name.abuchen.portfolio.util.Dates;
     }
 
     private final List<Payment> payments = new ArrayList<>();
-    private Periodicity periodicity = Periodicity.NONE;
+    private Periodicity periodicity;
     private MutableMoney sum;
     private double rateOfReturnPerYear;
     private Quote yearlyDividendPerShare;
@@ -113,12 +113,16 @@ import name.abuchen.portfolio.util.Dates;
     public void finish(CurrencyConverter converter, List<CalculationLineItem> lineItems)
     {
         if (payments.isEmpty())
+        {
+            this.periodicity = Periodicity.NONE;
+            this.yearlyDividendPerShare = Quote.of(getTermCurrency(), 0);
             return;
+        }
 
         // first sort
         Collections.sort(payments, (r, l) -> r.date.compareTo(l.date));
 
-        // get first and last payment
+        // get first and last payment date
         LocalDate firstPayment = payments.get(0).date;
         LocalDate lastPayment = payments.get(payments.size() - 1).date;
 
@@ -136,7 +140,7 @@ import name.abuchen.portfolio.util.Dates;
 
         this.periodicity = determinePeriodicity(firstPayment, lastPayment);
 
-        this.yearlyDividendPerShare = currentYearlyDividendPerShare(converter);
+        this.yearlyDividendPerShare = currentYearlyDividendPerShare(converter, lastPayment);
     }
 
     public Quote getYearlyDividendPerShare()
@@ -147,16 +151,15 @@ import name.abuchen.portfolio.util.Dates;
     /**
      * Sum of all payments per share in the last 12 months.
      */
-    private Quote currentYearlyDividendPerShare(CurrencyConverter converter)
+    private Quote currentYearlyDividendPerShare(CurrencyConverter converter, LocalDate lastPayment)
     {
-        LocalDate lastPayment = payments.get(payments.size() - 1).date;
-
-        // small offset to 365 because payments may vary slightly
+        // small offset to 365 because payment dates may vary slightly
         LocalDate rangeStart = lastPayment.minusDays(365 - 20);
 
-        long yearlyDividendPerYear = payments.stream().filter(p -> p.date.isAfter(rangeStart))
-                        .map(p -> converter.convert(p.date, p.dividendPerShare)).mapToLong(q -> q.getAmount()).sum();
-
+        long yearlyDividendPerYear = payments.stream() //
+                        .filter(p -> p.date.isAfter(rangeStart)) //
+                        .mapToLong(q -> q.dividendPerShare.getAmount()) //
+                        .sum();
         return Quote.of(getTermCurrency(), yearlyDividendPerYear);
     }
 
