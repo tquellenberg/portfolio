@@ -152,6 +152,6 @@ public class SecurityMasterDataPage extends AbstractPage
                         .applyTo(valueNote);
         
         SecurityMetaDataTransfer meta = new SecurityMetaDataTransfer();
-        meta.exportSecurityMetaData(model.getSecurity(), model.getClient());
+        meta.exportSecurityMetaData(model.getSecurity(), model.getClient().getTaxonomies());
     }
 }

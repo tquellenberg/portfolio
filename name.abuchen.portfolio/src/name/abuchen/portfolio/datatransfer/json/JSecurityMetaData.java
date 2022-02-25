@@ -9,7 +9,6 @@ import name.abuchen.portfolio.money.CurrencyUnit;
 public class JSecurityMetaData
 {
 
-    private String uuid;
     private String onlineId;
 
     private String name;
@@ -23,7 +22,7 @@ public class JSecurityMetaData
     private String wkn;
     private String calendar;
 
-    private List<JTaxonomyClassification> taxonomies = new ArrayList<>();
+    private List<JTaxonomy> taxonomies = new ArrayList<>();
 
     public JSecurityMetaData(String isin, String name)
     {
@@ -31,9 +30,8 @@ public class JSecurityMetaData
         this.name = name;
     }
 
-    public JSecurityMetaData(Security security, List<JTaxonomyClassification> taxonomies)
+    public JSecurityMetaData(Security security, List<JTaxonomy> taxonomies)
     {
-        this.uuid = security.getUUID();
         this.onlineId = security.getOnlineId();
         this.name = security.getName();
         this.currencyCode = security.getCurrencyCode();
@@ -44,16 +42,6 @@ public class JSecurityMetaData
         this.wkn = security.getWkn();
         this.calendar = security.getCalendar();
         this.taxonomies.addAll(taxonomies);
-    }
-
-    public String getUuid()
-    {
-        return uuid;
-    }
-
-    public void setUuid(String uuid)
-    {
-        this.uuid = uuid;
     }
 
     public String getOnlineId()
