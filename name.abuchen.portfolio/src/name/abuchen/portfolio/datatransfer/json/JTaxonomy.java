@@ -1,30 +1,42 @@
 package name.abuchen.portfolio.datatransfer.json;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class JTaxonomy
 {
     private String name;
-    private List<JTaxonomyClassification> classifications = new ArrayList<>();
+    private List<JTaxonomyAssignment> assignments;
 
     public JTaxonomy(String name)
     {
         this.name = name;
     }
 
-    public void addClassification(JTaxonomyClassification jTaxonomyClassification)
+    public void addAssignment(JTaxonomyAssignment jTaxonomyClassification)
     {
-        classifications.add(jTaxonomyClassification);
+        if (assignments == null)
+        {
+            assignments = new ArrayList<JTaxonomyAssignment>();
+        }
+        assignments.add(jTaxonomyClassification);
     }
 
-    public boolean hasClassification()
+    public boolean hasAssignment()
     {
-        return !classifications.isEmpty();
+        return assignments != null && !assignments.isEmpty();
     }
-    
+
     public String getName()
     {
         return name;
+    }
+
+    public List<JTaxonomyAssignment> getAssignments()
+    {
+        if (assignments == null)
+            return Collections.emptyList();
+        return assignments;
     }
 }

@@ -1,14 +1,16 @@
 {
+  "isin": "US0378331005",
   "name": "Apple Inc",
   "currencyCode": "EUR",
   "note": "Meine Anmerkungen...",
-  "isin": "US0378331005",
   "tickerSymbol": "APC.DE",
   "wkn": "",
+  "properties": {},
+  "attributes": {},
   "taxonomies": [
     {
       "name": "Regionen (MSCI)",
-      "classifications": [
+      "assignments": [
         {
           "id": "",
           "path": [
@@ -16,8 +18,7 @@
             "Welt",
             "Amerikas"
           ],
-          "weight": 9000,
-          "color": "#ffff00"
+          "weight": 9000
         },
         {
           "id": "",
@@ -26,8 +27,7 @@
             "Welt",
             "Europa"
           ],
-          "weight": 1000,
-          "color": "#ff00ff"
+          "weight": 1000
         }
       ]
     }

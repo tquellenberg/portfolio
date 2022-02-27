@@ -2,7 +2,7 @@ package name.abuchen.portfolio.datatransfer.json;
 
 import java.util.List;
 
-public class JTaxonomyClassification
+public class JTaxonomyAssignment
 {
 
     private String id;
@@ -11,13 +11,10 @@ public class JTaxonomyClassification
 
     private int weight;
 
-    private String color;
-
-    public JTaxonomyClassification(String id, List<String> path, int weight, String color)
+    public JTaxonomyAssignment(String id, List<String> path, int weight)
     {
         super();
         this.id = id;
-        this.setColor(color);
         this.setPath(path);
         this.weight = weight;
     }
@@ -45,16 +42,6 @@ public class JTaxonomyClassification
     public void setPath(List<String> path)
     {
         this.path = path;
-    }
-
-    public String getColor()
-    {
-        return color;
-    }
-
-    public void setColor(String color)
-    {
-        this.color = color;
     }
 
 }
