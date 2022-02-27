@@ -35,8 +35,9 @@ public class SecurityMetaDataTransfer
 
     public String exportSecurityMetaData(Security security, List<Taxonomy> taxonomies)
     {
-        JSecurityMetaData securityMetaData = new JSecurityMetaData(security, getClassifications(security, taxonomies));
-        String json = GSON.toJson(securityMetaData);
+        JSecurities jSecurities = new JSecurities();
+        jSecurities.addSecurity(new JSecurityMetaData(security, getClassifications(security, taxonomies)));
+        String json = GSON.toJson(jSecurities);
         System.out.println(json);
         return json;
     }
@@ -67,7 +68,7 @@ public class SecurityMetaDataTransfer
 
     public void importSecurityMetaData(String json, Security security, List<Taxonomy> taxonomies)
     {
-        JSecurityMetaData jSecurity = GSON.fromJson(json, JSecurityMetaData.class);
+        JSecurityMetaData jSecurity = GSON.fromJson(json, JSecurities.class).getSecurities().get(0);
         if (security.getIsin() == null)
         {
             security.setIsin(jSecurity.getIsin());
