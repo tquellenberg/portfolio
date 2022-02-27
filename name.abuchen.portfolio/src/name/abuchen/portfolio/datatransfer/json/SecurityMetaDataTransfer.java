@@ -33,10 +33,13 @@ public class SecurityMetaDataTransfer
                     .registerTypeAdapter(LocalTime.class, new LocalTimeSerializer())
                     .setFieldNamingPolicy(FieldNamingPolicy.IDENTITY).setPrettyPrinting().create();
 
-    public String exportSecurityMetaData(Security security, List<Taxonomy> taxonomies)
+    public String exportSecurityMetaData(List<Security> securities, List<Taxonomy> taxonomies)
     {
         JSecurities jSecurities = new JSecurities();
-        jSecurities.addSecurity(new JSecurityMetaData(security, getClassifications(security, taxonomies)));
+        for (Security security : securities)
+        {
+            jSecurities.addSecurity(new JSecurityMetaData(security, getClassifications(security, taxonomies)));            
+        }
         String json = GSON.toJson(jSecurities);
         System.out.println(json);
         return json;

@@ -1,6 +1,10 @@
 package name.abuchen.portfolio.ui.views;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +23,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -33,8 +38,10 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+import name.abuchen.portfolio.datatransfer.json.SecurityMetaDataTransfer;
 import name.abuchen.portfolio.model.Client;
 import name.abuchen.portfolio.model.Exchange;
 import name.abuchen.portfolio.model.LimitPrice;
@@ -46,6 +53,7 @@ import name.abuchen.portfolio.online.QuoteFeed;
 import name.abuchen.portfolio.online.impl.EurostatHICPQuoteFeed;
 import name.abuchen.portfolio.ui.Images;
 import name.abuchen.portfolio.ui.Messages;
+import name.abuchen.portfolio.ui.PortfolioPlugin;
 import name.abuchen.portfolio.ui.UIConstants;
 import name.abuchen.portfolio.ui.dialogs.ListSelectionDialog;
 import name.abuchen.portfolio.ui.editor.AbstractFinanceView;
@@ -64,6 +72,7 @@ import name.abuchen.portfolio.ui.views.panes.TransactionsPane;
 import name.abuchen.portfolio.ui.wizards.datatransfer.CSVImportWizard;
 import name.abuchen.portfolio.ui.wizards.security.EditSecurityDialog;
 import name.abuchen.portfolio.ui.wizards.security.SearchSecurityWizardDialog;
+import name.abuchen.portfolio.util.TextUtil;
 import name.abuchen.portfolio.util.TradeCalendarManager;
 
 public class SecurityListView extends AbstractFinanceView
@@ -362,6 +371,73 @@ public class SecurityListView extends AbstractFinanceView
         }
     }
 
+    private class ExportDropDown extends DropDown implements IMenuListener
+    {
+
+        public ExportDropDown()
+        {
+            super(Messages.MenuExportData, Images.EXPORT, SWT.NONE);
+            setMenuListener(this);
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void menuAboutToShow(IMenuManager manager)
+        {
+            manager.add(new SimpleAction("Export as CSV", a -> {
+                new TableViewerCSVExporter(securities.getTableViewer()) //
+                                .export(getTitle() + ".csv"); //$NON-NLS-1$
+            }));
+
+            manager.add(new SimpleAction("Export as JSON", a -> {
+                IStructuredSelection structuredSelection = securities.getTableViewer().getStructuredSelection();
+                List<Security> securitiesToExport = new ArrayList<>();
+                if (structuredSelection.isEmpty())
+                {
+                    // Export all securities
+                    securitiesToExport.addAll((List<Security>) securities.getTableViewer().getInput());
+                }
+                else
+                {
+                    // Export selected securities
+                    structuredSelection.forEach(s -> securitiesToExport.add((Security) s));
+                }
+
+                String fileName;
+                if (securitiesToExport.size() == 1)
+                {
+                    fileName = securitiesToExport.get(0).getIsin() + ".json"; //$NON-NLS-1$
+                }
+                else
+                {
+                    fileName = getTitle() + ".json"; //$NON-NLS-1$
+                }
+
+                Shell shell = securities.getTableViewer().getTable().getShell();
+                FileDialog dialog = new FileDialog(shell, SWT.SAVE);
+                dialog.setFileName(TextUtil.sanitizeFilename(fileName));
+                dialog.setOverwrite(true);
+                String name = dialog.open();
+                if (name == null)
+                    return;
+
+                String json = new SecurityMetaDataTransfer().exportSecurityMetaData(securitiesToExport,
+                                getClient().getTaxonomies());
+
+                try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(name),
+                                StandardCharsets.UTF_8))
+                {
+                    writer.write(json);
+                }
+                catch (IOException e)
+                {
+                    PortfolioPlugin.log(e);
+                    MessageDialog.openError(shell, Messages.ExportWizardErrorExporting, e.getMessage());
+                }
+            }));
+        }
+    }
+
     @Inject
     private SelectionService selectionService;
 
@@ -423,7 +499,7 @@ public class SecurityListView extends AbstractFinanceView
 
         toolBar.add(new CreateSecurityDropDown());
         toolBar.add(new FilterDropDown(getPreferenceStore()));
-        addExportButton(toolBar);
+        toolBar.add(new ExportDropDown());
 
         toolBar.add(new DropDown(Messages.MenuShowHideColumns, Images.CONFIG, SWT.NONE,
                         manager -> securities.getColumnHelper().menuAboutToShow(manager)));
@@ -463,23 +539,6 @@ public class SecurityListView extends AbstractFinanceView
                 return control.computeSize(100, SWT.DEFAULT, true).x;
             }
         });
-    }
-
-    private void addExportButton(ToolBarManager toolBar)
-    {
-        Action export = new Action()
-        {
-            @Override
-            public void run()
-            {
-                new TableViewerCSVExporter(securities.getTableViewer()) //
-                                .export(getTitle() + ".csv"); //$NON-NLS-1$
-            }
-        };
-        export.setImageDescriptor(Images.EXPORT.descriptor());
-        export.setToolTipText(Messages.MenuExportData);
-
-        toolBar.add(export);
     }
 
     // //////////////////////////////////////////////////////////////

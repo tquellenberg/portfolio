@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.Test;
@@ -75,7 +76,7 @@ public class SecurityMetaDataTransferTest
         classification32.addAssignment(new Assignment(security, 1000));
 
         SecurityMetaDataTransfer meta = new SecurityMetaDataTransfer();
-        String exportSecurityMetaData = meta.exportSecurityMetaData(security, taxonomy);
+        String exportSecurityMetaData = meta.exportSecurityMetaData(Collections.singletonList(security), taxonomy);
 
         assertEquals(json, exportSecurityMetaData);
     }
@@ -100,10 +101,10 @@ public class SecurityMetaDataTransferTest
         assertEquals("APC.DE", s.getTickerSymbol());
         assertEquals("", s.getWkn());
         assertEquals("de", s.getCalendar());
-        
+
         Attributes attributes = s.getAttributes();
         assertTrue(attributes.exists(new AttributeType("logo")));
-        
+
         assertEquals("abc", s.getPropertyValue(Type.FEED, "GENERIC-JSON-DATE").get());
 
         List<Classification> classifications = taxonomy1.getClassifications(s);

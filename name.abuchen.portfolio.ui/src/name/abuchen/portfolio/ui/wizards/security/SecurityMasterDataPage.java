@@ -15,7 +15,6 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Text;
 
-import name.abuchen.portfolio.datatransfer.json.SecurityMetaDataTransfer;
 import name.abuchen.portfolio.ui.Images;
 import name.abuchen.portfolio.ui.Messages;
 import name.abuchen.portfolio.ui.util.BindingHelper;
@@ -150,8 +149,5 @@ public class SecurityMasterDataPage extends AbstractPage
                         SWT.BORDER | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL | SWT.WRAP, SWT.DEFAULT);
         GridDataFactory.fillDefaults().grab(true, true).hint(SWT.DEFAULT, SWTHelper.lineHeight(valueNote) * 4)
                         .applyTo(valueNote);
-        
-        SecurityMetaDataTransfer meta = new SecurityMetaDataTransfer();
-        meta.exportSecurityMetaData(model.getSecurity(), model.getClient().getTaxonomies());
     }
 }
