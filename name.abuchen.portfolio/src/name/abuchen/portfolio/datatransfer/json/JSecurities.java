@@ -6,8 +6,11 @@ import java.util.List;
 public class JSecurities
 {
 
-    private String version = "1.0"; //$NON-NLS-1$
-    private String type = "SecurityMetaData"; //$NON-NLS-1$
+    public static final String VERSION_1_0 = "1.0"; //$NON-NLS-1$
+    public static final String SECURITY_META_DATA = "SecurityMetaData"; //$NON-NLS-1$
+    
+    private String version = VERSION_1_0;
+    private String type = SECURITY_META_DATA; 
 
     private List<JSecurityMetaData> securities = new ArrayList<>();
 

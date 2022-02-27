@@ -1,9 +1,14 @@
 package name.abuchen.portfolio.datatransfer.json;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,7 +43,7 @@ public class SecurityMetaDataTransfer
         JSecurities jSecurities = new JSecurities();
         for (Security security : securities)
         {
-            jSecurities.addSecurity(new JSecurityMetaData(security, getClassifications(security, taxonomies)));            
+            jSecurities.addSecurity(new JSecurityMetaData(security, getClassifications(security, taxonomies)));
         }
         String json = GSON.toJson(jSecurities);
         System.out.println(json);
@@ -176,5 +181,28 @@ public class SecurityMetaDataTransfer
         }
 
         return null;
+    }
+
+    public List<JSecurityMetaData> validate(String jsonFileName)
+    {
+        try
+        {
+            String json = Files.readString(new File(jsonFileName).toPath(), StandardCharsets.UTF_8);
+            JSecurities fromJson = GSON.fromJson(json, JSecurities.class);
+            if (fromJson.getVersion().equals(JSecurities.VERSION_1_0)
+                            && fromJson.getType().endsWith(JSecurities.SECURITY_META_DATA))
+            {
+                return fromJson.getSecurities();
+            }
+            else
+            {
+                PortfolioLog.error("Wrong file version or file type."); //$NON-NLS-1$
+            }
+        }
+        catch (IOException e)
+        {
+            PortfolioLog.error(e);
+        }
+        return Collections.emptyList();
     }
 }
