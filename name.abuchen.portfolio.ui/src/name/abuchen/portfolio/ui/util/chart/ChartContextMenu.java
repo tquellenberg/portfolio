@@ -205,6 +205,10 @@ import name.abuchen.portfolio.util.TextUtil;
                         if (filename == null)
                             return;
 
+                        lastUsedFileExtension = dialog.getFilterIndex();
+                        if (lastUsedFileExtension == -1)
+                            lastUsedFileExtension = 0;
+
                         int format;
                         if (filename.endsWith(".jpg") || filename.endsWith(".jpeg")) //$NON-NLS-1$ //$NON-NLS-2$
                             format = SWT.IMAGE_JPEG;
@@ -212,13 +216,17 @@ import name.abuchen.portfolio.util.TextUtil;
                             format = SWT.IMAGE_PNG;
                         else
                         {
-                            filename = filename + ".png"; //$NON-NLS-1$
-                            format = SWT.IMAGE_PNG;
+                            if (lastUsedFileExtension == 0 || lastUsedFileExtension == 1)
+                            {
+                                filename = filename + ".jpg"; //$NON-NLS-1$
+                                format = SWT.IMAGE_JPEG;
+                            }
+                            else
+                            {
+                                filename = filename + ".png"; //$NON-NLS-1$
+                                format = SWT.IMAGE_PNG;
+                            }
                         }
-
-                        lastUsedFileExtension = dialog.getFilterIndex();
-                        if (lastUsedFileExtension == -1)
-                            lastUsedFileExtension = 0;
 
                         boolean isChartTitleVisible = chart.getTitle().isVisible();
                         boolean isChartLegendVisible = chart.getLegend().isVisible();
