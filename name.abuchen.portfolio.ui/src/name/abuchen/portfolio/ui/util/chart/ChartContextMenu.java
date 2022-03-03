@@ -25,7 +25,7 @@ import name.abuchen.portfolio.util.TextUtil;
 
     private Chart chart;
     private Menu contextMenu;
-    
+
     private static int lastUsedFileExtension = 2;
 
     public ChartContextMenu(Chart chart)
@@ -211,32 +211,32 @@ import name.abuchen.portfolio.util.TextUtil;
                         else if (filename.endsWith(".png")) //$NON-NLS-1$
                             format = SWT.IMAGE_PNG;
                         else
-                            format = SWT.IMAGE_UNDEFINED;
-                        
+                        {
+                            filename = filename + ".png"; //$NON-NLS-1$
+                            format = SWT.IMAGE_PNG;
+                        }
+
                         lastUsedFileExtension = dialog.getFilterIndex();
-                        if(lastUsedFileExtension == -1)
+                        if (lastUsedFileExtension == -1)
                             lastUsedFileExtension = 0;
 
-                        if (format != SWT.IMAGE_UNDEFINED)
+                        boolean isChartTitleVisible = chart.getTitle().isVisible();
+                        boolean isChartLegendVisible = chart.getLegend().isVisible();
+                        try
                         {
-                            boolean isChartTitleVisible = chart.getTitle().isVisible(); 
-                            boolean isChartLegendVisible = chart.getLegend().isVisible();
-                            try
-                            {
-                                chart.suspendUpdate(true);
-                                chart.getTitle().setVisible(true);
-                                chart.getLegend().setVisible(true);
-                                chart.getLegend().setPosition(SWT.BOTTOM);
-                                chart.suspendUpdate(false);
-                                chart.save(filename, format);
-                            }
-                            finally
-                            {
-                                chart.suspendUpdate(true);
-                                chart.getTitle().setVisible(isChartTitleVisible);
-                                chart.getLegend().setVisible(isChartLegendVisible);
-                                chart.suspendUpdate(false);
-                            }
+                            chart.suspendUpdate(true);
+                            chart.getTitle().setVisible(true);
+                            chart.getLegend().setVisible(true);
+                            chart.getLegend().setPosition(SWT.BOTTOM);
+                            chart.suspendUpdate(false);
+                            chart.save(filename, format);
+                        }
+                        finally
+                        {
+                            chart.suspendUpdate(true);
+                            chart.getTitle().setVisible(isChartTitleVisible);
+                            chart.getLegend().setVisible(isChartLegendVisible);
+                            chart.suspendUpdate(false);
                         }
                     }
 
@@ -249,8 +249,7 @@ import name.abuchen.portfolio.util.TextUtil;
                 {
                     PortfolioPlugin.log(e);
                 }
-                
-                
+
             }
         });
     }
