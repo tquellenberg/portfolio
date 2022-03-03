@@ -21,12 +21,14 @@ import name.abuchen.portfolio.util.TextUtil;
 
 /* package */class ChartContextMenu
 {
+    private static final int DEFAULT_FILE_EXTENSION = 2;
+
     private static final String[] EXTENSIONS = new String[] { "*.jpeg", "*.jpg", "*.png" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
     private Chart chart;
     private Menu contextMenu;
 
-    private static int lastUsedFileExtension = 2;
+    private static int lastUsedFileExtension = DEFAULT_FILE_EXTENSION;
 
     public ChartContextMenu(Chart chart)
     {
@@ -207,7 +209,7 @@ import name.abuchen.portfolio.util.TextUtil;
 
                         lastUsedFileExtension = dialog.getFilterIndex();
                         if (lastUsedFileExtension == -1)
-                            lastUsedFileExtension = 0;
+                            lastUsedFileExtension = DEFAULT_FILE_EXTENSION;
 
                         int format;
                         if (filename.endsWith(".jpg") || filename.endsWith(".jpeg")) //$NON-NLS-1$ //$NON-NLS-2$
