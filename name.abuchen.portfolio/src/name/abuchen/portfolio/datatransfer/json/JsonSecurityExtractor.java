@@ -1,10 +1,9 @@
 package name.abuchen.portfolio.datatransfer.json;
 
-import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -18,24 +17,27 @@ import com.google.common.base.Strings;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 
 import name.abuchen.portfolio.PortfolioLog;
 import name.abuchen.portfolio.datatransfer.Extractor;
 import name.abuchen.portfolio.datatransfer.ImportAction;
-import name.abuchen.portfolio.datatransfer.SecurityCache;
-import name.abuchen.portfolio.datatransfer.actions.InsertAction;
 import name.abuchen.portfolio.datatransfer.ImportAction.Context;
 import name.abuchen.portfolio.datatransfer.ImportAction.Status;
+import name.abuchen.portfolio.datatransfer.SecurityCache;
+import name.abuchen.portfolio.datatransfer.actions.InsertAction;
 import name.abuchen.portfolio.json.impl.LocalDateSerializer;
 import name.abuchen.portfolio.json.impl.LocalTimeSerializer;
 import name.abuchen.portfolio.model.AttributeType;
 import name.abuchen.portfolio.model.Classification;
+import name.abuchen.portfolio.model.Classification.Assignment;
 import name.abuchen.portfolio.model.Client;
 import name.abuchen.portfolio.model.Security;
 import name.abuchen.portfolio.model.SecurityProperty;
-import name.abuchen.portfolio.model.Taxonomy;
-import name.abuchen.portfolio.model.Classification.Assignment;
 import name.abuchen.portfolio.model.SecurityProperty.Type;
+import name.abuchen.portfolio.model.Taxonomy;
+import name.abuchen.portfolio.model.Taxonomy.AssignmentVisitor;
 
 public class JsonSecurityExtractor implements Extractor
 {
@@ -67,57 +69,73 @@ public class JsonSecurityExtractor implements Extractor
     public List<Item> extract(SecurityCache securityCache, InputFile file, List<Exception> errors)
     {
         List<Item> result = new ArrayList<>();
+        FileReader fileReader;
         try
         {
-            for (JSecurityMetaData jSecurityMetaData : parseJson(file.getFile().toPath()))
-            {
-                String isinToImport = jSecurityMetaData.getIsin();
-                if (!Strings.isNullOrEmpty(isinToImport))
-                {
-                    Security s = securityCache.lookup(isinToImport, "", "", "", () -> {
-                        Security newSecurity = new Security();
-                        newSecurity.setCurrencyCode(client.getBaseCurrency());
-                        newSecurity.setIsin(isinToImport);
-                        return newSecurity;
-                    });
-
-                    result.add(new Extractor.SecurityItem(s) {
-                        @Override
-                        public Status apply(ImportAction action, Context context)
-                        {
-                            if (action instanceof InsertAction) {
-                                importSecurityMetaData(jSecurityMetaData, getSecurity(), client.getTaxonomies());                                
-                            }
-                            return super.apply(action, context);
-                        }
-                    });
-                }
-            }
+            fileReader = new FileReader(file.getFile(), StandardCharsets.UTF_8);
         }
         catch (IOException e)
         {
             errors.add(e);
+            return result;
+        }
+        for (JSecurityMetaData jSecurityMetaData : parseJson(fileReader, errors))
+        {
+            String isinToImport = jSecurityMetaData.getIsin();
+            if (!Strings.isNullOrEmpty(isinToImport))
+            {
+                Security s = securityCache.lookup(isinToImport, "", "", "", () -> {
+                    Security newSecurity = new Security();
+                    newSecurity.setCurrencyCode(client.getBaseCurrency());
+                    newSecurity.setIsin(isinToImport);
+                    return newSecurity;
+                });
+
+                result.add(new Extractor.SecurityItem(s)
+                {
+                    @Override
+                    public Status apply(ImportAction action, Context context)
+                    {
+                        if (action instanceof InsertAction)
+                        {
+                            importSecurityMetaData(jSecurityMetaData, getSecurity(), client.getTaxonomies());
+                        }
+                        return super.apply(action, context);
+                    }
+                });
+            }
         }
         return result;
     }
 
     public void importSecurityMetaData(JSecurityMetaData jSecurity, Security security, List<Taxonomy> taxonomies)
     {
-        security.setIsin(jSecurity.getIsin());
-        security.setName(jSecurity.getName());
-        security.setOnlineId(jSecurity.getOnlineId());
-        security.setCurrencyCode(jSecurity.getCurrencyCode());
-        security.setTargetCurrencyCode(jSecurity.getTargetCurrencyCode());
-
-        security.setNote(jSecurity.getNote());
-        security.setTickerSymbol(jSecurity.getTickerSymbol());
-        security.setWkn(jSecurity.getWkn());
-        security.setCalendar(jSecurity.getCalendar());
-
-        security.setFeed(jSecurity.getFeed());
-        security.setFeedURL(jSecurity.getFeedURL());
-        security.setLatestFeed(jSecurity.getLatestFeed());
-        security.setLatestFeedURL(jSecurity.getLatestFeedURL());
+        if (jSecurity.getIsin() != null)
+            security.setIsin(jSecurity.getIsin());
+        if (jSecurity.getName() != null)
+            security.setName(jSecurity.getName());
+        if (jSecurity.getOnlineId() != null)
+            security.setOnlineId(jSecurity.getOnlineId());
+        if (jSecurity.getCurrencyCode() != null)
+            security.setCurrencyCode(jSecurity.getCurrencyCode());
+        if (jSecurity.getTargetCurrencyCode() != null)
+            security.setTargetCurrencyCode(jSecurity.getTargetCurrencyCode());
+        if (jSecurity.getNote() != null)
+            security.setNote(jSecurity.getNote());
+        if (jSecurity.getTickerSymbol() != null)
+            security.setTickerSymbol(jSecurity.getTickerSymbol());
+        if (jSecurity.getWkn() != null)
+            security.setWkn(jSecurity.getWkn());
+        if (jSecurity.getCalendar() != null)
+            security.setCalendar(jSecurity.getCalendar());
+        if (jSecurity.getFeed() != null)
+            security.setFeed(jSecurity.getFeed());
+        if (jSecurity.getFeedURL() != null)
+            security.setFeedURL(jSecurity.getFeedURL());
+        if (jSecurity.getLatestFeed() != null)
+            security.setLatestFeed(jSecurity.getLatestFeed());
+        if (jSecurity.getLatestFeedURL() != null)
+            security.setLatestFeedURL(jSecurity.getLatestFeedURL());
 
         Map<Type, Map<String, String>> properties = jSecurity.getProperties();
         if (properties != null)
@@ -148,6 +166,13 @@ public class JsonSecurityExtractor implements Extractor
             if (taxonomyByName.isPresent())
             {
                 Taxonomy taxonomy = taxonomyByName.get();
+
+                // Clear old assignments
+                taxonomy.foreach(new AssignmentVisitor((c, a) -> {
+                    if (a.getInvestmentVehicle().equals(security))
+                        c.removeAssignment(a);
+                }));
+                // Add new assignments
                 for (JTaxonomyAssignment jAssignment : jTaxonomy.getAssignments())
                 {
                     String id = jAssignment.getId();
@@ -207,10 +232,19 @@ public class JsonSecurityExtractor implements Extractor
         return null;
     }
 
-    public List<JSecurityMetaData> parseJson(Path file) throws IOException
+    public List<JSecurityMetaData> parseJson(Reader file, List<Exception> errors)
     {
-        String json = Files.readString(file, StandardCharsets.UTF_8);
-        JSecurities fromJson = GSON.fromJson(json, JSecurities.class);
+        JSecurities fromJson;
+        try
+        {
+            fromJson = GSON.fromJson(file, JSecurities.class);
+        }
+        catch (JsonSyntaxException | JsonIOException e)
+        {
+            errors.add(e);
+            PortfolioLog.error(e);
+            return Collections.emptyList();
+        }
         if (fromJson.getVersion().equals(JSecurities.VERSION_1_0)
                         && fromJson.getType().endsWith(JSecurities.SECURITY_META_DATA))
         {
@@ -218,6 +252,7 @@ public class JsonSecurityExtractor implements Extractor
         }
         else
         {
+            errors.add(new IllegalArgumentException("Wrong file version or file type.")); //$NON-NLS-1$
             PortfolioLog.error("Wrong file version or file type."); //$NON-NLS-1$
         }
         return Collections.emptyList();

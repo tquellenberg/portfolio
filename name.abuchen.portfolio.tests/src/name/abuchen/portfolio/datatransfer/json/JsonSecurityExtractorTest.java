@@ -4,9 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,9 +61,11 @@ public class JsonSecurityExtractorTest
     public void parseJson() throws IOException, URISyntaxException
     {
         JsonSecurityExtractor extractor = new JsonSecurityExtractor(null);
-        Path jsonPath = Paths.get(JsonSecurityExtractorTest.class.getResource("complex.json").toURI());
+        InputStreamReader reader = new InputStreamReader(
+                        JsonSecurityExtractorTest.class.getResourceAsStream("complex.json"), StandardCharsets.UTF_8);
 
-        List<JSecurityMetaData> securityMetaData = extractor.parseJson(jsonPath);
+        List<Exception> errors = new ArrayList<>();
+        List<JSecurityMetaData> securityMetaData = extractor.parseJson(reader, errors);
 
         assertEquals(1, securityMetaData.size());
         assertEquals("US0378331005", securityMetaData.get(0).getIsin());
@@ -73,8 +75,11 @@ public class JsonSecurityExtractorTest
     public void importSecurity() throws IOException, URISyntaxException
     {
         JsonSecurityExtractor extractor = new JsonSecurityExtractor(null);
-        Path jsonPath = Paths.get(JsonSecurityExtractorTest.class.getResource("complex.json").toURI());
-        List<JSecurityMetaData> parseJson = extractor.parseJson(jsonPath);
+        InputStreamReader reader = new InputStreamReader(
+                        JsonSecurityExtractorTest.class.getResourceAsStream("complex.json"), StandardCharsets.UTF_8);
+
+        List<Exception> errors = new ArrayList<>();
+        List<JSecurityMetaData> parseJson = extractor.parseJson(reader, errors);
 
         List<Taxonomy> taxonomy = buildTaxonomy();
         Security s = new Security();

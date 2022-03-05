@@ -57,17 +57,17 @@ public class ImportJsonHandler
 
         JsonSecurityExtractor extractor = new JsonSecurityExtractor(client);
         
+        Map<Extractor, List<Extractor.Item>> result = new HashMap<>();
         ArrayList<Exception> errors = new ArrayList<>();
         
         List<InputFile> files = Collections.singletonList(new Extractor.InputFile(new File(fileName)));
         List<Extractor.Item> items = extractor.extract(files, errors);
         
-        Map<Extractor, List<Extractor.Item>> result = new HashMap<>();
         result.put(extractor, items);
 
         Map<File, List<Exception>> e = new HashMap<>();
-//        if (!errors.isEmpty())
-//            e.put(files.get(0).getFile(), errors);
+        if (!errors.isEmpty())
+            e.put(files.get(0).getFile(), errors);
 
         IPreferenceStore preferences = ((PortfolioPart) part.getObject()).getPreferenceStore();
         ImportExtractedItemsWizard wizard = new ImportExtractedItemsWizard(client, preferences, result, e);
