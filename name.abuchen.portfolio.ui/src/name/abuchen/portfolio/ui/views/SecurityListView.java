@@ -41,7 +41,7 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
-import name.abuchen.portfolio.datatransfer.json.SecurityMetaDataTransfer;
+import name.abuchen.portfolio.datatransfer.json.JsonSecurityExporter;
 import name.abuchen.portfolio.model.Client;
 import name.abuchen.portfolio.model.Exchange;
 import name.abuchen.portfolio.model.LimitPrice;
@@ -421,7 +421,7 @@ public class SecurityListView extends AbstractFinanceView
                 if (name == null)
                     return;
 
-                String json = new SecurityMetaDataTransfer().exportSecurityMetaData(securitiesToExport,
+                String json = new JsonSecurityExporter().exportSecurityMetaData(securitiesToExport,
                                 getClient().getTaxonomies());
                 try
                 {

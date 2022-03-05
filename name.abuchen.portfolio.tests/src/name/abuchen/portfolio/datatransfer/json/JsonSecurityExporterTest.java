@@ -1,7 +1,6 @@
 package name.abuchen.portfolio.datatransfer.json;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -13,15 +12,12 @@ import org.junit.Test;
 
 import com.google.common.io.Resources;
 
-import name.abuchen.portfolio.model.AttributeType;
-import name.abuchen.portfolio.model.Attributes;
 import name.abuchen.portfolio.model.Classification;
-import name.abuchen.portfolio.model.Classification.Assignment;
 import name.abuchen.portfolio.model.Security;
-import name.abuchen.portfolio.model.SecurityProperty.Type;
 import name.abuchen.portfolio.model.Taxonomy;
+import name.abuchen.portfolio.model.Classification.Assignment;
 
-public class SecurityMetaDataTransferTest
+public class JsonSecurityExporterTest
 {
 
     private Taxonomy taxonomy1;
@@ -62,7 +58,7 @@ public class SecurityMetaDataTransferTest
     @Test
     public void exportSecurity() throws IOException
     {
-        String json = Resources.toString(SecurityMetaDataTransfer.class.getResource("simple.json"),
+        String json = Resources.toString(JsonSecurityExporterTest.class.getResource("simple.json"),
                         StandardCharsets.UTF_8);
 
         Security security = new Security("Apple Inc", "US0378331005", "APC.DE", null);
@@ -75,43 +71,10 @@ public class SecurityMetaDataTransferTest
         classification31.addAssignment(new Assignment(security, 9000));
         classification32.addAssignment(new Assignment(security, 1000));
 
-        SecurityMetaDataTransfer meta = new SecurityMetaDataTransfer();
-        String exportSecurityMetaData = meta.exportSecurityMetaData(Collections.singletonList(security), taxonomy);
+        JsonSecurityExporter exporter = new JsonSecurityExporter();
+        String exportSecurityMetaData = exporter.exportSecurityMetaData(Collections.singletonList(security), taxonomy);
 
         assertEquals(json, exportSecurityMetaData);
     }
 
-    @Test
-    public void importSecurity() throws IOException
-    {
-        String json = Resources.toString(SecurityMetaDataTransfer.class.getResource("complex.json"),
-                        StandardCharsets.UTF_8);
-
-        SecurityMetaDataTransfer meta = new SecurityMetaDataTransfer();
-
-        List<Taxonomy> taxonomy = buildTaxonomy();
-        Security s = new Security();
-        meta.importSecurityMetaData(json, s, taxonomy);
-
-        assertEquals("Apple Inc", s.getName());
-        assertEquals("035ffa2ff94b49a08ede0637bdfcbc2d", s.getOnlineId());
-        assertEquals("US0378331005", s.getIsin());
-        assertEquals("EUR", s.getCurrencyCode());
-        assertEquals("Meine Anmerkungen...", s.getNote());
-        assertEquals("APC.DE", s.getTickerSymbol());
-        assertEquals("", s.getWkn());
-        assertEquals("de", s.getCalendar());
-
-        Attributes attributes = s.getAttributes();
-        assertTrue(attributes.exists(new AttributeType("logo")));
-
-        assertEquals("abc", s.getPropertyValue(Type.FEED, "GENERIC-JSON-DATE").get());
-
-        List<Classification> classifications = taxonomy1.getClassifications(s);
-        assertEquals(2, classifications.size());
-        classifications.sort((c1, c2) -> Integer.compare(c1.getAssignments().get(0).getWeight(),
-                        c2.getAssignments().get(0).getWeight()));
-        assertEquals(1000, classifications.get(0).getAssignments().get(0).getWeight());
-        assertEquals(9000, classifications.get(1).getAssignments().get(0).getWeight());
-    }
 }
