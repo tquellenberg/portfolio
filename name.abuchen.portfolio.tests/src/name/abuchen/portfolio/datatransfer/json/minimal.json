@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "type": "SecurityMetaData",
+  "securities": [
+    {
+      "isin": "US0378331005",
+      "name": "Apple Inc"
+    }
+  ]
+}

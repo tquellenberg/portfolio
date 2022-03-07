@@ -225,4 +225,8 @@ public class JSecurityMetaData
     {
         return properties;
     }
+    public void setProperties(Map<SecurityProperty.Type, Map<String, String>> properties)
+    {
+        this.properties = properties;
+    }
 }
