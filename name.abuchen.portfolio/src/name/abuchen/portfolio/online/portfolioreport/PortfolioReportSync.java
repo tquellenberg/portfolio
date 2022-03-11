@@ -25,7 +25,6 @@ import name.abuchen.portfolio.model.PortfolioTransferEntry;
 import name.abuchen.portfolio.model.Security;
 import name.abuchen.portfolio.model.Taxonomy;
 import name.abuchen.portfolio.model.Transaction;
-import name.abuchen.portfolio.money.Values;
 
 @SuppressWarnings("nls")
 public class PortfolioReportSync

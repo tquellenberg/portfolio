@@ -142,7 +142,7 @@ public final class SecuritiesTable implements ModificationListener
                 else
                 {
                     security.setOnlineId(onlineId);
-                    PortfolioReportNet.updateWith(security, result.get());
+                    PortfolioReportNet.updateWith(security, result.get(), getClient().getTaxonomies());
                 }
             }
             catch (IOException e)

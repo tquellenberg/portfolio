@@ -52,7 +52,7 @@ public final class SyncOnlineSecuritiesJob extends AbstractClientJob
 
                 if (item.isPresent())
                 {
-                    boolean hasUpdate = PortfolioReportNet.updateWith(security, item.get());
+                    boolean hasUpdate = PortfolioReportNet.updateWith(security, item.get(), getClient().getTaxonomies());
                     isDirty = isDirty || hasUpdate;
                 }
                 else

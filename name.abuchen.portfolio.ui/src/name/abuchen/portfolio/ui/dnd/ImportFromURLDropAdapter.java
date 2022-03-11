@@ -133,7 +133,7 @@ public class ImportFromURLDropAdapter extends AbstractDropAdapter
             Security newSecurity = new Security();
             newSecurity.setName(result.get().getName());
             newSecurity.setOnlineId(onlineId);
-            PortfolioReportNet.updateWith(newSecurity, result.get());
+            PortfolioReportNet.updateWith(newSecurity, result.get(), part.getClient().getTaxonomies());
 
             QuoteFeed feed = Factory.getQuoteFeedProvider(PortfolioReportQuoteFeed.ID);
             List<Exchange> exchanges = feed.getExchanges(newSecurity, new ArrayList<>());
@@ -152,6 +152,11 @@ public class ImportFromURLDropAdapter extends AbstractDropAdapter
                 part.getClient().addSecurity(newSecurity);
 
                 new UpdateQuotesJob(part.getClient(), newSecurity).schedule();
+            }
+            else
+            {
+                // Cleanup already imported taxonomies
+                part.getClient().deleteTaxonomyAssignments(newSecurity);
             }
         }
         catch (IOException e)

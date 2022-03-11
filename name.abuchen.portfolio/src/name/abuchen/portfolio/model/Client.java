@@ -530,7 +530,7 @@ public class Client
         }
     }
 
-    private void deleteTaxonomyAssignments(final InvestmentVehicle vehicle)
+    public void deleteTaxonomyAssignments(final InvestmentVehicle vehicle)
     {
         for (Taxonomy taxonomy : taxonomies)
         {

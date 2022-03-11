@@ -19,10 +19,15 @@ import org.osgi.framework.FrameworkUtil;
 
 import com.google.gson.Gson;
 
+import name.abuchen.portfolio.model.Classification;
+import name.abuchen.portfolio.model.Classification.Assignment;
 import name.abuchen.portfolio.model.ClientSettings;
 import name.abuchen.portfolio.model.Security;
 import name.abuchen.portfolio.model.SecurityProperty;
 import name.abuchen.portfolio.model.SecurityProperty.Type;
+import name.abuchen.portfolio.money.Values;
+import name.abuchen.portfolio.model.Taxonomy;
+import name.abuchen.portfolio.model.Taxonomy.AssignmentVisitor;
 import name.abuchen.portfolio.online.SecuritySearchProvider;
 import name.abuchen.portfolio.online.SecuritySearchProvider.ResultItem;
 import name.abuchen.portfolio.util.WebAccess;
@@ -126,6 +131,49 @@ public class PortfolioReportNet
         }
     }
 
+    static class TaxonomyInfo
+    {
+        private String taxonomyUuid;
+        private String rootTaxonomyUuid;
+        private double weight;
+
+        public static List<TaxonomyInfo> from(JSONArray json)
+        {
+            if (json == null)
+                return Collections.emptyList();
+
+            List<TaxonomyInfo> answer = new ArrayList<>();
+            for (Object obj : json)
+            {
+                JSONObject taxonomy = (JSONObject) obj;
+
+                TaxonomyInfo t = new TaxonomyInfo();
+                t.taxonomyUuid = (String) taxonomy.get("taxonomyUuid"); //$NON-NLS-1$
+                t.rootTaxonomyUuid = (String) taxonomy.get("rootTaxonomyUuid"); //$NON-NLS-1$
+                t.weight = Double.valueOf((String) taxonomy.get("weight")); //$NON-NLS-1$
+
+                answer.add(t);
+            }
+
+            return answer;
+        }
+
+        public String getTaxonomyUuid()
+        {
+            return taxonomyUuid;
+        }
+
+        public String getRootTaxonomyUuid()
+        {
+            return rootTaxonomyUuid;
+        }
+
+        public int getWeight()
+        {
+            return (int) (weight * Values.Weight.factor());
+        }
+    }
+
     /* package */ static class OnlineItem implements ResultItem
     {
         private String id;
@@ -136,6 +184,7 @@ public class PortfolioReportNet
         private String wkn;
         private List<SymbolInfo> symbols;
         private List<MarketInfo> markets;
+        private List<TaxonomyInfo> taxonomyInfos;
 
         /* package */ static OnlineItem from(JSONObject jsonObject)
         {
@@ -155,6 +204,7 @@ public class PortfolioReportNet
             vehicle.wkn = (String) jsonObject.get("wkn"); //$NON-NLS-1$
             vehicle.symbols = SymbolInfo.from(jsonObject);
             vehicle.markets = MarketInfo.from((JSONArray) jsonObject.get("markets")); //$NON-NLS-1$
+            vehicle.taxonomyInfos = TaxonomyInfo.from((JSONArray) jsonObject.get("securityTaxonomies")); //$NON-NLS-1$
             return vehicle;
         }
 
@@ -287,6 +337,54 @@ public class PortfolioReportNet
 
             return isDirty || !remote.isEmpty();
         }
+
+        private Optional<Taxonomy> findTaxonomyById(List<Taxonomy> taxonomies, String id)
+        {
+            return taxonomies.stream().filter(t -> t.getRoot().getId().equals(id)).findAny();
+        }
+
+        public boolean updateTaxonomy(Security security, List<Taxonomy> taxonomies)
+        {
+            boolean isDirty = false;
+            
+            // Clear existing assignments
+            clearExistingAssignments(security, taxonomies);
+            
+            // Set updated assignments
+            for (TaxonomyInfo taxonomyInfo : taxonomyInfos)
+            {
+                String rootTaxonomyUuid = taxonomyInfo.getRootTaxonomyUuid();
+                Optional<Taxonomy> taxonomyOpt = findTaxonomyById(taxonomies, rootTaxonomyUuid);
+                if (taxonomyOpt.isPresent())
+                {
+                    Classification classification = taxonomyOpt.get()
+                                    .getClassificationById(taxonomyInfo.getTaxonomyUuid());
+                    if (classification != null)
+                    {
+                        classification.addAssignment(new Assignment(security, taxonomyInfo.getWeight()));
+                        isDirty = true;
+                    }
+                }
+            }
+            return isDirty;
+        }
+
+        private void clearExistingAssignments(Security security, List<Taxonomy> taxonomies)
+        {
+            Set<String> taxonomiesToCleanup = taxonomyInfos.stream().map(TaxonomyInfo::getRootTaxonomyUuid)
+                            .collect(Collectors.toSet());
+            for (String rootUuid : taxonomiesToCleanup)
+            {
+                findTaxonomyById(taxonomies, rootUuid).ifPresent(t -> {
+                    t.foreach(new AssignmentVisitor((c, a) -> {
+                        if (a.getInvestmentVehicle().equals(security))
+                        {
+                            c.removeAssignment(a);
+                        }
+                    }));
+                });
+            }
+        }
     }
 
     private static final String TYPE_SHARE = "share"; //$NON-NLS-1$
@@ -349,11 +447,13 @@ public class PortfolioReportNet
         return onlineItems;
     }
 
-    public static boolean updateWith(Security security, ResultItem item)
+    public static boolean updateWith(Security security, ResultItem item, List<Taxonomy> taxonomies)
     {
         if (!(item instanceof OnlineItem))
             throw new IllegalArgumentException();
 
-        return ((OnlineItem) item).update(security);
+        boolean isDirty = ((OnlineItem) item).update(security);
+        isDirty = ((OnlineItem) item).updateTaxonomy(security, taxonomies) || isDirty;
+        return isDirty;
     }
 }
