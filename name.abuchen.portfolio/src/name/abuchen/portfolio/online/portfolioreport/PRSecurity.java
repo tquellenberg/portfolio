@@ -23,6 +23,7 @@ public class PRSecurity
     private Instant updatedAt;
     private List<PRSecurityProperty> properties;
     private List<PRSecurityEvent> events;
+    private List<PRSecurityTaxonomy> securityTaxonomies;
 
     public String calendar;
     public String feed;

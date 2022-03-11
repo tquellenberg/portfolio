@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -16,12 +17,15 @@ import name.abuchen.portfolio.model.Account;
 import name.abuchen.portfolio.model.AccountTransaction;
 import name.abuchen.portfolio.model.AccountTransferEntry;
 import name.abuchen.portfolio.model.BuySellEntry;
+import name.abuchen.portfolio.model.Classification;
 import name.abuchen.portfolio.model.Client;
 import name.abuchen.portfolio.model.Portfolio;
 import name.abuchen.portfolio.model.PortfolioTransaction;
 import name.abuchen.portfolio.model.PortfolioTransferEntry;
 import name.abuchen.portfolio.model.Security;
+import name.abuchen.portfolio.model.Taxonomy;
 import name.abuchen.portfolio.model.Transaction;
+import name.abuchen.portfolio.money.Values;
 
 @SuppressWarnings("nls")
 public class PortfolioReportSync
@@ -39,6 +43,50 @@ public class PortfolioReportSync
         this.filename = filename;
 
         this.api = new PRApiClient(apiUrl, apiKey);
+    }
+
+    public void importTaxonomy(IProgressMonitor monitor) throws IOException
+    {
+        monitor.beginTask("Syncing taxonomies with Portfolio Report", 2);
+
+        List<PRTaxonomy> prTaxonomies = api.listTaxonomies();
+        monitor.worked(1);
+        
+        List<Taxonomy> existingTaxonomies = client.getTaxonomies();
+        for (PRTaxonomy prTaxonomyRoot : PRTaxonomy.findWithParent(prTaxonomies, null))
+        {
+            Optional<Taxonomy> findAny = existingTaxonomies.stream()
+                            .filter(t -> t.getRoot().getId().equals(prTaxonomyRoot.getUuid())).findAny();
+            if (findAny.isEmpty())
+            {
+                // Import new
+                Taxonomy taxonomy = new Taxonomy(prTaxonomyRoot.getName());
+                Classification rootClassification = new Classification(prTaxonomyRoot.getUuid(), prTaxonomyRoot.getName());
+                taxonomy.setRootNode(rootClassification);
+                buildClassification(prTaxonomies, rootClassification);
+                rootClassification.assignRandomColors();
+                client.addTaxonomy(taxonomy);
+                client.touch();
+            }
+            else
+            {
+                System.out.println("Update");
+                // TODO: Update
+            }
+        }
+        monitor.worked(1);
+    }
+
+    private void buildClassification(List<PRTaxonomy> prTaxonomies, Classification parent)
+    {
+        int rank = 0;
+        for (PRTaxonomy prChild : PRTaxonomy.findWithParent(prTaxonomies, parent.getId()))
+        {
+            Classification child = new Classification(parent, prChild.getUuid(), prChild.getName(), null);
+            child.setRank(rank++);
+            parent.addChild(child);
+            buildClassification(prTaxonomies, child);
+        }
     }
 
     public void sync(IProgressMonitor monitor) throws IOException

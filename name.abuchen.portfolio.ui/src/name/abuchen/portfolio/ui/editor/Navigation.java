@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -506,6 +507,25 @@ public final class Navigation
         }
     }
 
+    public void updateTaxonomies(Client client)
+    {
+        List<Taxonomy> existingTaxonomies = findAll(i -> i.getParameter() instanceof Taxonomy)
+                        .map(i -> (Taxonomy) i.getParameter()).collect(Collectors.toList());
+
+        List<Taxonomy> taxonomies = new ArrayList<>(client.getTaxonomies());
+        taxonomies.removeAll(existingTaxonomies);
+
+        Optional<Item> section = getRoots().filter(i -> i.getLabel().equals(Messages.LabelTaxonomies)).findAny();
+        section.ifPresent(s -> {
+            for (Taxonomy taxonomy : taxonomies)
+            {
+                Item item = createTaxonomyItem(s, client, taxonomy);
+                s.add(item);
+                this.listeners.forEach(l -> l.changed(item));
+            }
+        });
+    }
+
     private Item createTaxonomyItem(Item section, Client client, Taxonomy taxonomy)
     {
         Item item = new Item(taxonomy.getName(), TaxonomyView.class);
@@ -605,4 +625,5 @@ public final class Navigation
         if ("yes".equals(System.getProperty("name.abuchen.portfolio.debug"))) //$NON-NLS-1$ //$NON-NLS-2$
             section.add(new Item("Browser Test", BrowserTestView.class)); //$NON-NLS-1$
     }
+
 }

@@ -142,6 +142,10 @@ public class PRApiClient
         return deleteEntity(PRTransaction.class,
                         "/portfolios/" + portfolioId + "/transactions/" + transaction.getUuid());
     }
+    
+    public List<PRTaxonomy> listTaxonomies() throws IOException {
+        return list(PRTaxonomy.class, "/taxonomies/");        
+    }
 
     private <T> List<T> list(Class<T> type, String path) throws IOException
     {
