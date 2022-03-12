@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -50,17 +51,18 @@ public class PortfolioReportSync
 
         List<PRTaxonomy> prTaxonomies = api.listTaxonomies();
         monitor.worked(1);
-        
+
         List<Taxonomy> existingTaxonomies = client.getTaxonomies();
         for (PRTaxonomy prTaxonomyRoot : PRTaxonomy.findWithParent(prTaxonomies, null))
         {
-            Optional<Taxonomy> findAny = existingTaxonomies.stream()
+            Optional<Taxonomy> existingTaxonomy = existingTaxonomies.stream()
                             .filter(t -> t.getRoot().getId().equals(prTaxonomyRoot.getUuid())).findAny();
-            if (findAny.isEmpty())
+            if (existingTaxonomy.isEmpty())
             {
-                // Import new
+                // Import new taxonomy
                 Taxonomy taxonomy = new Taxonomy(prTaxonomyRoot.getName());
-                Classification rootClassification = new Classification(prTaxonomyRoot.getUuid(), prTaxonomyRoot.getName());
+                Classification rootClassification = new Classification(prTaxonomyRoot.getUuid(),
+                                prTaxonomyRoot.getName());
                 taxonomy.setRootNode(rootClassification);
                 buildClassification(prTaxonomies, rootClassification);
                 rootClassification.assignRandomColors();
@@ -69,11 +71,38 @@ public class PortfolioReportSync
             }
             else
             {
-                System.out.println("Update");
-                // TODO: Update
+                // Update existing taxonomy (only add new classification)
+                if (updateClassification(prTaxonomies, existingTaxonomy.get().getRoot()))
+                {
+                    client.touch();
+                }
             }
         }
         monitor.worked(1);
+    }
+
+    private boolean updateClassification(List<PRTaxonomy> prTaxonomies, Classification parent)
+    {
+        boolean isDirty = false;
+        int rank = 0;
+
+        Map<String, Classification> existingChildren = parent.getChildren().stream()
+                        .collect(Collectors.toMap(Classification::getId, Function.identity()));
+        for (PRTaxonomy prChild : PRTaxonomy.findWithParent(prTaxonomies, parent.getId()))
+        {
+            Classification child = existingChildren.get(prChild.getUuid());
+            if (child == null)
+            {
+                child = new Classification(parent, prChild.getUuid(), prChild.getName(), null);
+                child.setRank(rank);
+                parent.addChild(child);
+                parent.cascadeColorDown();
+                isDirty = true;
+            }
+            rank++;
+            isDirty = updateClassification(prTaxonomies, child) || isDirty;
+        }
+        return isDirty;
     }
 
     private void buildClassification(List<PRTaxonomy> prTaxonomies, Classification parent)
