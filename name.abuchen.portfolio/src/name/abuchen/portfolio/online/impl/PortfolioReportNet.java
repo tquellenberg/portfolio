@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.json.simple.JSONArray;
@@ -25,9 +26,8 @@ import name.abuchen.portfolio.model.ClientSettings;
 import name.abuchen.portfolio.model.Security;
 import name.abuchen.portfolio.model.SecurityProperty;
 import name.abuchen.portfolio.model.SecurityProperty.Type;
-import name.abuchen.portfolio.money.Values;
 import name.abuchen.portfolio.model.Taxonomy;
-import name.abuchen.portfolio.model.Taxonomy.AssignmentVisitor;
+import name.abuchen.portfolio.money.Values;
 import name.abuchen.portfolio.online.SecuritySearchProvider;
 import name.abuchen.portfolio.online.SecuritySearchProvider.ResultItem;
 import name.abuchen.portfolio.util.WebAccess;
@@ -346,44 +346,63 @@ public class PortfolioReportNet
         public boolean updateTaxonomy(Security security, List<Taxonomy> taxonomies)
         {
             boolean isDirty = false;
-            
-            // Clear existing assignments
-            clearExistingAssignments(security, taxonomies);
-            
-            // Set updated assignments
-            for (TaxonomyInfo taxonomyInfo : taxonomyInfos)
+
+            Map<String, List<TaxonomyInfo>> groupedInfos = taxonomyInfos.stream()
+                            .collect(Collectors.groupingBy(TaxonomyInfo::getRootTaxonomyUuid));
+
+            for (Map.Entry<String, List<TaxonomyInfo>> taxoUpdateEntry : groupedInfos.entrySet())
             {
-                String rootTaxonomyUuid = taxonomyInfo.getRootTaxonomyUuid();
+                String rootTaxonomyUuid = taxoUpdateEntry.getKey();
                 Optional<Taxonomy> taxonomyOpt = findTaxonomyById(taxonomies, rootTaxonomyUuid);
                 if (taxonomyOpt.isPresent())
                 {
-                    Classification classification = taxonomyOpt.get()
-                                    .getClassificationById(taxonomyInfo.getTaxonomyUuid());
-                    if (classification != null)
-                    {
-                        classification.addAssignment(new Assignment(security, taxonomyInfo.getWeight()));
-                        isDirty = true;
-                    }
+                    isDirty = updateTaxonomy(taxonomyOpt.get(), security, taxoUpdateEntry.getValue()) || isDirty;
                 }
             }
+
             return isDirty;
         }
 
-        private void clearExistingAssignments(Security security, List<Taxonomy> taxonomies)
+        private boolean updateTaxonomy(Taxonomy taxonomy, Security security, List<TaxonomyInfo> newDataList)
         {
-            Set<String> taxonomiesToCleanup = taxonomyInfos.stream().map(TaxonomyInfo::getRootTaxonomyUuid)
-                            .collect(Collectors.toSet());
-            for (String rootUuid : taxonomiesToCleanup)
+            boolean isDirty = false;
+
+            Map<String, TaxonomyInfo> newDatas = newDataList.stream()
+                            .collect(Collectors.toMap(TaxonomyInfo::getTaxonomyUuid, Function.identity()));
+
+            for (Classification existingClassification : taxonomy.getClassifications(security))
             {
-                findTaxonomyById(taxonomies, rootUuid).ifPresent(t -> {
-                    t.foreach(new AssignmentVisitor((c, a) -> {
-                        if (a.getInvestmentVehicle().equals(security))
-                        {
-                            c.removeAssignment(a);
-                        }
-                    }));
-                });
+                TaxonomyInfo newData = newDatas.get(existingClassification.getId());
+                if (newData != null)
+                {
+                    // Update existing assignment
+                    Assignment existingData = existingClassification.getAssignmentFor(security).get();
+                    if (existingData.getWeight() != newData.getWeight())
+                    {
+                        existingData.setWeight(newData.getWeight());
+                        isDirty = true;
+                    }
+                    // New data processed => remove from map
+                    newDatas.remove(existingClassification.getId());
+                }
+                else
+                {
+                    // Remove existing assignment
+                    existingClassification.removeAssignment(existingClassification.getAssignmentFor(security).get());
+                    isDirty = true;
+                }
             }
+            // Add new assignments
+            for (TaxonomyInfo newData : newDatas.values())
+            {
+                Classification classification = taxonomy.getClassificationById(newData.getTaxonomyUuid());
+                if (classification != null)
+                {
+                    classification.addAssignment(new Assignment(security, newData.getWeight()));
+                    isDirty = true;
+                }
+            }
+            return isDirty;
         }
     }
 

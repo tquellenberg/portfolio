@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
@@ -217,6 +218,11 @@ public class Classification implements Named
     public List<Assignment> getAssignments()
     {
         return assignments;
+    }
+
+    public Optional<Assignment> getAssignmentFor(InvestmentVehicle investmentVehicle)
+    {
+        return assignments.stream().filter(a -> a.getInvestmentVehicle().equals(investmentVehicle)).findAny();
     }
 
     public void addAssignment(Assignment assignment)
