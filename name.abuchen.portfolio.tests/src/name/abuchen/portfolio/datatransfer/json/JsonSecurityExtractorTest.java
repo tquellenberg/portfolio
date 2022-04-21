@@ -35,10 +35,11 @@ public class JsonSecurityExtractorTest
 
     private List<Taxonomy> taxonomies;
     private Taxonomy taxonomy1;
-    
+
     private Classification classification31;
     private Classification classification32;
     private Classification classification311;
+    private Classification classification33;
 
     private List<Taxonomy> buildTaxonomies()
     {
@@ -73,6 +74,12 @@ public class JsonSecurityExtractorTest
         classification32.setParent(classification2);
         classification2.addChild(classification32);
         classification32.setColor("#ff00ff");
+
+        classification33 = new Classification("", "Pazifik");
+        classification33.setKey("RW3");
+        classification33.setParent(classification2);
+        classification2.addChild(classification33);
+        classification33.setColor("#ff00ff");
 
         Taxonomy taxonomy2 = new Taxonomy("Branchen (GICS, Sektoren)");
         Classification classification3 = new Classification("1234", "Branchen (GICS, Sektoren)");
@@ -159,8 +166,79 @@ public class JsonSecurityExtractorTest
         assertEquals(2, classifications.size());
         classifications.sort((c1, c2) -> Integer.compare(c1.getAssignments().get(0).getWeight(),
                         c2.getAssignments().get(0).getWeight()));
-        assertEquals(1000, classifications.get(0).getAssignments().get(0).getWeight());
-        assertEquals(9000, classifications.get(1).getAssignments().get(0).getWeight());
+        assertEquals(Classification.ONE_HUNDRED_PERCENT / 100 * 10,
+                        classifications.get(0).getAssignments().get(0).getWeight());
+        assertEquals(Classification.ONE_HUNDRED_PERCENT / 100 * 90,
+                        classifications.get(1).getAssignments().get(0).getWeight());
+    }
+
+    @Test
+    public void importTaxonomyByName()
+    {
+        List<JSecurityMetaData> parseJson = extractor.parseJson(reader("byName.json"), errors);
+
+        Security s = new Security();
+        extractor.importSecurityMetaData(parseJson.get(0), s, taxonomies);
+
+        List<Classification> classifications = taxonomy1.getClassifications(s);
+        assertEquals(2, classifications.size());
+        classifications.sort((c1, c2) -> Integer.compare(c1.getAssignments().get(0).getWeight(),
+                        c2.getAssignments().get(0).getWeight()));
+        assertEquals(Classification.ONE_HUNDRED_PERCENT / 100 * 10,
+                        classifications.get(0).getAssignments().get(0).getWeight());
+        assertEquals(Classification.ONE_HUNDRED_PERCENT / 100 * 90,
+                        classifications.get(1).getAssignments().get(0).getWeight());
+    }
+
+    @Test
+    public void importTaxonomyWirthWrongWeight()
+    {
+        List<JSecurityMetaData> parseJson = extractor.parseJson(reader("wrongWeight.json"), errors);
+
+        Security s = new Security();
+        extractor.importSecurityMetaData(parseJson.get(0), s, taxonomies);
+
+        List<Classification> classifications = taxonomy1.getClassifications(s);
+        assertEquals(1, classifications.size());
+        assertEquals(Classification.ONE_HUNDRED_PERCENT, classifications.get(0).getAssignments().get(0).getWeight());
+    }
+
+    @Test
+    public void importTaxonomyWithoutWeight()
+    {
+        List<JSecurityMetaData> parseJson = extractor.parseJson(reader("withoutWeight.json"), errors);
+
+        Security s = new Security();
+        extractor.importSecurityMetaData(parseJson.get(0), s, taxonomies);
+
+        List<Classification> classifications = taxonomy1.getClassifications(s);
+        assertEquals(2, classifications.size());
+        classifications.sort((c1, c2) -> Integer.compare(c1.getAssignments().get(0).getWeight(),
+                        c2.getAssignments().get(0).getWeight()));
+        assertEquals(Classification.ONE_HUNDRED_PERCENT / 2,
+                        classifications.get(0).getAssignments().get(0).getWeight());
+        assertEquals(Classification.ONE_HUNDRED_PERCENT / 2,
+                        classifications.get(1).getAssignments().get(0).getWeight());
+    }
+
+    @Test
+    public void importTaxonomyRoundingWeight()
+    {
+        List<JSecurityMetaData> parseJson = extractor.parseJson(reader("roundingWeight.json"), errors);
+
+        Security s = new Security();
+        extractor.importSecurityMetaData(parseJson.get(0), s, taxonomies);
+
+        List<Classification> classifications = taxonomy1.getClassifications(s);
+        assertEquals(3, classifications.size());
+        classifications.sort((c1, c2) -> Integer.compare(c1.getAssignments().get(0).getWeight(),
+                        c2.getAssignments().get(0).getWeight()));
+        assertEquals(Classification.ONE_HUNDRED_PERCENT / 3,
+                        classifications.get(0).getAssignments().get(0).getWeight());
+        assertEquals(Classification.ONE_HUNDRED_PERCENT / 3,
+                        classifications.get(1).getAssignments().get(0).getWeight());
+        assertEquals(Classification.ONE_HUNDRED_PERCENT / 3,
+                        classifications.get(2).getAssignments().get(0).getWeight());
     }
 
     @Test

@@ -172,7 +172,9 @@ public class JsonSecurityExtractor implements Extractor
                         c.removeAssignment(a);
                 }));
                 // Add new assignments
-                for (JTaxonomyAssignment jAssignment : jTaxonomy.getAssignments())
+                List<JTaxonomyAssignment> jAssignments = jTaxonomy.getAssignments();
+                fixWeights(jAssignments);
+                for (JTaxonomyAssignment jAssignment : jAssignments)
                 {
                     String key = jAssignment.getKey();
                     String name = jAssignment.getName();
@@ -186,7 +188,6 @@ public class JsonSecurityExtractor implements Extractor
                         PortfolioLog.warning(MessageFormat.format(
                                         "Classification with key ''{0}'' and name ''{1}'' not found.", //$NON-NLS-1$
                                         key, name));
-
                     }
                 }
             }
@@ -194,6 +195,42 @@ public class JsonSecurityExtractor implements Extractor
             {
                 PortfolioLog.warning(MessageFormat.format("Taxonomy with key ''{0}'' name ''{1}'' not found.", //$NON-NLS-1$
                                 jTaxonomy.getKey(), jTaxonomy.getName()));
+            }
+        }
+    }
+
+    private void fixWeights(List<JTaxonomyAssignment> assignments)
+    {
+        if (assignments.isEmpty())
+            return;
+
+        // Only one assignment => 100%
+        if (assignments.size() == 1)
+        {
+            assignments.get(0).setWeight(Classification.ONE_HUNDRED_PERCENT);
+            return;
+        }
+
+        // All without weight => equal weight
+        if (assignments.stream().allMatch(a -> a.getWeight() == 0))
+        {
+            int weight = Classification.ONE_HUNDRED_PERCENT / assignments.size();
+            assignments.stream().forEach(a -> a.setWeight(weight));
+            return;
+        }
+
+        // Some with zero or negative weight => remove
+        assignments.removeIf(a -> a.getWeight() <= 0);
+
+        // sum not 100% => adjust with factor
+        Integer weightSum = assignments.stream().map(JTaxonomyAssignment::getWeight).reduce(0, Integer::sum);
+        if (weightSum != Classification.ONE_HUNDRED_PERCENT)
+        {
+            double factor = (double) Classification.ONE_HUNDRED_PERCENT / (double) weightSum;
+            for (JTaxonomyAssignment assignment : assignments)
+            {
+                int newWeight = (int) (assignment.getWeight() * factor);
+                assignment.setWeight(newWeight);
             }
         }
     }

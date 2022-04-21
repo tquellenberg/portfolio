@@ -27,6 +27,11 @@ public class JTaxonomyAssignment
         return weight;
     }
 
+    public void setWeight(int weight)
+    {
+        this.weight = weight;
+    }
+    
     public String getName()
     {
         return name;
