@@ -33,12 +33,14 @@ public class JsonSecurityExtractorTest
     private JsonSecurityExtractor extractor;
     private List<Exception> errors;
 
-    private List<Taxonomy> taxonomy;
+    private List<Taxonomy> taxonomies;
     private Taxonomy taxonomy1;
+    
     private Classification classification31;
     private Classification classification32;
+    private Classification classification311;
 
-    private List<Taxonomy> buildTaxonomy()
+    private List<Taxonomy> buildTaxonomies()
     {
         List<Taxonomy> taxonomies = new ArrayList<Taxonomy>();
 
@@ -46,24 +48,36 @@ public class JsonSecurityExtractorTest
         taxonomies.add(taxonomy1);
 
         Classification classification = new Classification("1234", "Regionen (MSCI)");
+        classification.setKey("regions-msci");
         taxonomy1.setRootNode(classification);
 
         Classification classification2 = new Classification("", "Welt");
+        classification2.setKey("RW");
         classification2.setParent(classification);
         classification.addChild(classification2);
 
         classification31 = new Classification("", "Amerikas");
+        classification31.setKey("RW1");
         classification31.setParent(classification2);
         classification2.addChild(classification31);
         classification31.setColor("#ffff00");
 
+        classification311 = new Classification("", "Vereinigte Staaten");
+        classification311.setKey("country_US");
+        classification311.setParent(classification31);
+        classification31.addChild(classification311);
+        classification311.setColor("#ffff00");
+
         classification32 = new Classification("", "Europa");
+        classification32.setKey("RW2");
         classification32.setParent(classification2);
         classification2.addChild(classification32);
         classification32.setColor("#ff00ff");
 
         Taxonomy taxonomy2 = new Taxonomy("Branchen (GICS, Sektoren)");
-        taxonomy2.setRootNode(new Classification("1234", "Branchen (GICS, Sektoren)"));
+        Classification classification3 = new Classification("1234", "Branchen (GICS, Sektoren)");
+        classification3.setKey("industry-gics-1st-level");
+        taxonomy2.setRootNode(classification3);
         taxonomies.add(taxonomy2);
 
         return taxonomies;
@@ -80,7 +94,7 @@ public class JsonSecurityExtractorTest
     {
         extractor = new JsonSecurityExtractor(null);
         errors = new ArrayList<>();
-        taxonomy = buildTaxonomy();
+        taxonomies = buildTaxonomies();
     }
 
     @Test
@@ -125,7 +139,7 @@ public class JsonSecurityExtractorTest
         List<JSecurityMetaData> parseJson = extractor.parseJson(reader("complex.json"), errors);
 
         Security s = new Security();
-        extractor.importSecurityMetaData(parseJson.get(0), s, taxonomy);
+        extractor.importSecurityMetaData(parseJson.get(0), s, taxonomies);
 
         assertEquals("Apple Inc", s.getName());
         assertEquals("035ffa2ff94b49a08ede0637bdfcbc2d", s.getOnlineId());
@@ -171,7 +185,7 @@ public class JsonSecurityExtractorTest
         attributes.put("logo", "data:image/png;base64,iVBORw0KGgoAAAANSUhEU...");
         jsonSecurity.setAttributes(attributes);
 
-        extractor.importSecurityMetaData(jsonSecurity, s, taxonomy);
+        extractor.importSecurityMetaData(jsonSecurity, s, taxonomies);
 
         assertEquals("Changed Name", s.getName());
         assertEquals("de", s.getCalendar());

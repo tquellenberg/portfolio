@@ -29,37 +29,28 @@
 			},
 			"taxonomies": [
 				{
-					"name": "Regionen (MSCI)",
+					"taxonomyKey": "regions-msci",
+					"taxonomyName": "Regionen (MSCI)",
 					"assignments": [
 						{
-							"key": "5d14e4d2-beac-4fe8-a51c-502e087b15fc",
-							"path": [
-								"Regionen (MSCI)",
-								"Welt",
-								"Amerikas"
-							],
+							"key": "country_US",
+							"name": "Vereinigte Staaten",
 							"weight": 9000
 						},
 						{
-							"key": "69e440f3-2e11-4ed9-bee3-0703723e7ca5",
-							"path": [
-								"Regionen (MSCI)",
-								"Welt",
-								"Europa"
-							],
+							"key": "RW2",
+							"name": "Europa \u0026 Mittlerer Osten",
 							"weight": 1000
 						}
 					]
 				},
 				{
-					"name": "Branchen (GICS, Sektoren)",
+					"taxonomyKey": "industry-gics-1st-level",
+					"taxonomyName": "Branchen (GICS, Sektoren)",
 					"assignments": [
 						{
-							"id": "91a2309a-2af4-4420-a2fe-1a810c575ec8",
-							"path": [
-								"Branchen (GICS, Sektoren)",
-								"Informationstechnologie"
-							],
+							"key": "45",
+							"name": "Informationstechnologie",
 							"weight": 10000
 						}
 					]

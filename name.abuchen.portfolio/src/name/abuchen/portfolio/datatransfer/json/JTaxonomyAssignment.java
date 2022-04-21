@@ -1,21 +1,19 @@
 package name.abuchen.portfolio.datatransfer.json;
 
-import java.util.List;
-
 public class JTaxonomyAssignment
 {
 
     private String key;
 
-    private List<String> path;
+    private String name;
 
     private int weight;
 
-    public JTaxonomyAssignment(String key, List<String> path, int weight)
+    public JTaxonomyAssignment(String key, String name, int weight)
     {
         super();
         this.key = key;
-        this.setPath(path);
+        this.name = name;
         this.weight = weight;
     }
 
@@ -29,19 +27,9 @@ public class JTaxonomyAssignment
         return weight;
     }
 
-    public void setWeight(int weight)
+    public String getName()
     {
-        this.weight = weight;
-    }
-
-    public List<String> getPath()
-    {
-        return path;
-    }
-
-    public void setPath(List<String> path)
-    {
-        this.path = path;
+        return name;
     }
 
 }

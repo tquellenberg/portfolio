@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
+import com.google.common.base.Strings;
+
 import name.abuchen.portfolio.model.Classification.Assignment;
 
 public class Taxonomy
@@ -25,7 +27,8 @@ public class Taxonomy
         }
     }
 
-    // To allow concise code in the form of "new AssignmentVisitor((c,a) -> {...})"
+    // To allow concise code in the form of "new AssignmentVisitor((c,a) ->
+    // {...})"
     public static class AssignmentVisitor implements Visitor
     {
         private BiConsumer<Classification, Assignment> visit;
@@ -75,6 +78,11 @@ public class Taxonomy
     /* package */void setId(String id)
     {
         this.id = id;
+    }
+
+    public String getKey()
+    {
+        return root != null ? root.getKey() : ""; //$NON-NLS-1$
     }
 
     public String getName()
@@ -138,7 +146,7 @@ public class Taxonomy
 
     public Classification getClassificationByKey(String key)
     {
-        if (key == null)
+        if (Strings.isNullOrEmpty(key))
             return null;
 
         LinkedList<Classification> stack = new LinkedList<>();

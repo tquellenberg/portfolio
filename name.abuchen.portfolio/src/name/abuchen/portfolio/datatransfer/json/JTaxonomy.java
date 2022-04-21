@@ -4,13 +4,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.google.gson.annotations.SerializedName;
+
 public class JTaxonomy
 {
+    @SerializedName("taxonomyKey")
+    private String key;
+
+    @SerializedName("taxonomyName")
     private String name;
+    
     private List<JTaxonomyAssignment> assignments;
 
-    public JTaxonomy(String name)
+    public JTaxonomy(String key, String name)
     {
+        this.key = key;
         this.name = name;
     }
 
@@ -28,6 +36,11 @@ public class JTaxonomy
         return assignments != null && !assignments.isEmpty();
     }
 
+    public String getKey()
+    {
+        return key;
+    }
+    
     public String getName()
     {
         return name;

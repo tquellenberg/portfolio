@@ -161,11 +161,10 @@ public class JsonSecurityExtractor implements Extractor
 
         for (JTaxonomy jTaxonomy : jSecurity.getTaxonomies())
         {
-            Optional<Taxonomy> taxonomyByName = taxonomies.stream().filter(t -> t.getName().equals(jTaxonomy.getName()))
-                            .findAny();
-            if (taxonomyByName.isPresent())
+            Optional<Taxonomy> existingTaxonomy = findTaxonomy(taxonomies, jTaxonomy.getKey(), jTaxonomy.getName());
+            if (existingTaxonomy.isPresent())
             {
-                Taxonomy taxonomy = taxonomyByName.get();
+                Taxonomy taxonomy = existingTaxonomy.get();
 
                 // Clear old assignments
                 taxonomy.foreach(new AssignmentVisitor((c, a) -> {
@@ -176,60 +175,61 @@ public class JsonSecurityExtractor implements Extractor
                 for (JTaxonomyAssignment jAssignment : jTaxonomy.getAssignments())
                 {
                     String key = jAssignment.getKey();
-                    List<String> path = jAssignment.getPath();
-                    Classification classification = findClassification(taxonomy, key, path);
-                    if (classification != null)
+                    String name = jAssignment.getName();
+                    Optional<Classification> existingClassification = findClassification(taxonomy, key, name);
+                    if (existingClassification.isPresent())
                     {
-                        classification.addAssignment(new Assignment(security, jAssignment.getWeight()));
+                        existingClassification.get().addAssignment(new Assignment(security, jAssignment.getWeight()));
                     }
                     else
                     {
                         PortfolioLog.warning(MessageFormat.format(
-                                        "Classification with id ''{0}'' and path ''{1}'' not found.", //$NON-NLS-1$
-                                        key, String.join(",", path))); //$NON-NLS-1$
+                                        "Classification with key ''{0}'' and name ''{1}'' not found.", //$NON-NLS-1$
+                                        key, name));
+
                     }
                 }
             }
             else
             {
-                PortfolioLog.warning(MessageFormat.format("Taxonomy with name ''{0}'' not found.", //$NON-NLS-1$
-                                jTaxonomy.getName()));
+                PortfolioLog.warning(MessageFormat.format("Taxonomy with key ''{0}'' name ''{1}'' not found.", //$NON-NLS-1$
+                                jTaxonomy.getKey(), jTaxonomy.getName()));
             }
         }
     }
 
-    private Classification findClassification(Taxonomy taxonomy, String key, List<String> path)
+    private Optional<Taxonomy> findTaxonomy(List<Taxonomy> allTaxonomies, String key, String name)
     {
-        // Find by id
+        // Find by key
+        if (!Strings.isNullOrEmpty(key))
+        {
+            Optional<Taxonomy> taxonomyByKey = allTaxonomies.stream().filter(t -> t.getKey().equals(key)).findAny();
+            if (taxonomyByKey.isPresent())
+                return taxonomyByKey;
+        }
+
+        // Find by name
+        if (!Strings.isNullOrEmpty(name))
+            return allTaxonomies.stream().filter(t -> t.getName().equals(name)).findAny();
+
+        return Optional.empty();
+    }
+
+    private Optional<Classification> findClassification(Taxonomy taxonomy, String key, String name)
+    {
+        // Find by key
         if (!Strings.isNullOrEmpty(key))
         {
             Classification classification = taxonomy.getClassificationByKey(key);
             if (classification != null)
-                return classification;
+                return Optional.of(classification);
         }
 
         // Find by path
-        if (path != null && path.size() >= 1)
-        {
-            Classification node = taxonomy.getRoot();
-            for (String pathName : path.subList(1, path.size()))
-            {
-                Optional<Classification> findFirst = node.getChildren().stream() //
-                                .filter(c -> c.getName().equals(pathName)) //
-                                .findFirst();
-                if (findFirst.isPresent())
-                {
-                    node = findFirst.get();
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            return node;
-        }
+        if (!Strings.isNullOrEmpty(name))
+            return taxonomy.getAllClassifications().stream().filter(c -> c.getName().equals(name)).findAny();
 
-        return null;
+        return Optional.empty();
     }
 
     public List<JSecurityMetaData> parseJson(Reader file, List<Exception> errors)

@@ -1361,7 +1361,7 @@ public class ClientFactory
         List<TaxonomyTemplate> taxonomyTemplates = TaxonomyTemplate.list();
         for (Taxonomy taxonomy : client.getTaxonomies())
         {
-            if (Strings.isNullOrEmpty(taxonomy.getRoot().getKey()))
+            if (Strings.isNullOrEmpty(taxonomy.getKey()))
             {
                 taxonomyTemplates.stream().filter(tt -> tt.getName().equals(taxonomy.getName())).findAny()
                                 .ifPresent(template -> {
