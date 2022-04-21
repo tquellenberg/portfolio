@@ -4,8 +4,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -20,9 +24,14 @@ import org.junit.Test;
 
 import com.google.gson.JsonSyntaxException;
 
+import name.abuchen.portfolio.datatransfer.Extractor.InputFile;
+import name.abuchen.portfolio.datatransfer.Extractor.Item;
+import name.abuchen.portfolio.datatransfer.SecurityCache;
+import name.abuchen.portfolio.datatransfer.actions.InsertAction;
 import name.abuchen.portfolio.model.AttributeType;
 import name.abuchen.portfolio.model.Attributes;
 import name.abuchen.portfolio.model.Classification;
+import name.abuchen.portfolio.model.Client;
 import name.abuchen.portfolio.model.Security;
 import name.abuchen.portfolio.model.SecurityProperty.Type;
 import name.abuchen.portfolio.model.Taxonomy;
@@ -40,6 +49,7 @@ public class JsonSecurityExtractorTest
     private Classification classification32;
     private Classification classification311;
     private Classification classification33;
+    private Client client;
 
     private List<Taxonomy> buildTaxonomies()
     {
@@ -99,7 +109,9 @@ public class JsonSecurityExtractorTest
     @Before
     public void setup()
     {
-        extractor = new JsonSecurityExtractor(null);
+        client = new Client();
+        client.setBaseCurrency("EUR");
+        extractor = new JsonSecurityExtractor(client);
         errors = new ArrayList<>();
         taxonomies = buildTaxonomies();
     }
@@ -141,7 +153,7 @@ public class JsonSecurityExtractorTest
     }
 
     @Test
-    public void importSecurity() throws IOException, URISyntaxException
+    public void importNewSecurity() throws IOException, URISyntaxException
     {
         List<JSecurityMetaData> parseJson = extractor.parseJson(reader("complex.json"), errors);
 
@@ -239,7 +251,7 @@ public class JsonSecurityExtractorTest
                         classifications.get(1).getAssignments().get(0).getWeight());
         assertEquals(Classification.ONE_HUNDRED_PERCENT / 3,
                         classifications.get(2).getAssignments().get(0).getWeight());
-        
+
         System.out.println(classifications.get(2).getAssignments().get(0).getWeight());
         System.out.println(Classification.ONE_HUNDRED_PERCENT / 3);
     }
@@ -274,5 +286,50 @@ public class JsonSecurityExtractorTest
         // leave parameter unchanged (only add and change possible)
         assertEquals("abs", s.getPropertyValue(Type.FEED, "GENERIC-JSON-DATE").get());
         assertTrue(s.getAttributes().exists(new AttributeType("logo")));
+    }
+
+    @Test
+    public void ignoreIllegalValues()
+    {
+        // Existing Security
+        Security s = new Security();
+        s.setIsin("US0378331005");
+        s.setName("Apple Inc");
+        s.setCalendar("de");
+
+        JSecurityMetaData jsonSecurity = new JSecurityMetaData("US0378331005", "   "); // Empty
+                                                                                       // name
+        jsonSecurity.setCalendar("Unknown Calendar");
+
+        extractor.importSecurityMetaData(jsonSecurity, s, taxonomies);
+
+        assertEquals("Apple Inc", s.getName()); // Unchanged
+        assertEquals("de", s.getCalendar()); // Unchanged
+    }
+
+    @Test
+    public void updateSecurityFromCache() throws IOException
+    {
+        // Existing Security
+        Security s = new Security();
+        s.setIsin("US0378331005");
+        s.setName("Old Name Inc");
+        s.setCalendar("de");
+        client.addSecurity(s);
+
+        SecurityCache securityCache = new SecurityCache(client);
+        
+        File tempFile = File.createTempFile(JsonSecurityExtractorTest.class.getSimpleName(), ".tmp");
+        tempFile.deleteOnExit();
+        InputStream resourceAsStream = JsonSecurityExtractorTest.class.getResourceAsStream("simple.json");
+        OutputStream outStream = new FileOutputStream(tempFile);
+        resourceAsStream.transferTo(outStream);
+        outStream.close();
+     
+        List<Item> extract = extractor.extract(securityCache, new InputFile(tempFile), errors);
+        extract.get(0).apply(new InsertAction(client), null);
+
+        Security updatedSecurity = client.getSecurities().get(0);
+        assertEquals("Apple Inc", updatedSecurity.getName());
     }
 }

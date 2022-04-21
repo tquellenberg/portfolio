@@ -1,5 +1,7 @@
 package name.abuchen.portfolio.datatransfer.json;
 
+import static name.abuchen.portfolio.util.TextUtil.trim;
+
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -38,6 +40,7 @@ import name.abuchen.portfolio.model.SecurityProperty;
 import name.abuchen.portfolio.model.SecurityProperty.Type;
 import name.abuchen.portfolio.model.Taxonomy;
 import name.abuchen.portfolio.model.Taxonomy.AssignmentVisitor;
+import name.abuchen.portfolio.util.TradeCalendarManager;
 
 public class JsonSecurityExtractor implements Extractor
 {
@@ -111,31 +114,38 @@ public class JsonSecurityExtractor implements Extractor
     public void importSecurityMetaData(JSecurityMetaData jSecurity, Security security, List<Taxonomy> taxonomies)
     {
         if (jSecurity.getIsin() != null)
-            security.setIsin(jSecurity.getIsin());
-        if (jSecurity.getName() != null)
-            security.setName(jSecurity.getName());
+            security.setIsin(trim(jSecurity.getIsin()));
+        if (!Strings.isNullOrEmpty(trim(jSecurity.getName())))
+            security.setName(trim(jSecurity.getName()));
         if (jSecurity.getOnlineId() != null)
-            security.setOnlineId(jSecurity.getOnlineId());
+            security.setOnlineId(trim(jSecurity.getOnlineId()));
         if (jSecurity.getCurrencyCode() != null)
-            security.setCurrencyCode(jSecurity.getCurrencyCode());
+            security.setCurrencyCode(trim(jSecurity.getCurrencyCode()));
         if (jSecurity.getTargetCurrencyCode() != null)
-            security.setTargetCurrencyCode(jSecurity.getTargetCurrencyCode());
+            security.setTargetCurrencyCode(trim(jSecurity.getTargetCurrencyCode()));
         if (jSecurity.getNote() != null)
             security.setNote(jSecurity.getNote());
         if (jSecurity.getTickerSymbol() != null)
-            security.setTickerSymbol(jSecurity.getTickerSymbol());
+            security.setTickerSymbol(trim(jSecurity.getTickerSymbol()));
         if (jSecurity.getWkn() != null)
-            security.setWkn(jSecurity.getWkn());
+            security.setWkn(trim(jSecurity.getWkn()));
         if (jSecurity.getCalendar() != null)
-            security.setCalendar(jSecurity.getCalendar());
+        {
+            String calendarCode = trim(jSecurity.getCalendar());
+            if (TradeCalendarManager.getInstance(calendarCode) != null || Strings.isNullOrEmpty(calendarCode))
+                security.setCalendar(calendarCode);
+            else
+                PortfolioLog.warning(MessageFormat.format("Unknown calendar code ''{0}''", //$NON-NLS-1$
+                                calendarCode));
+        }
         if (jSecurity.getFeed() != null)
-            security.setFeed(jSecurity.getFeed());
+            security.setFeed(trim(jSecurity.getFeed()));
         if (jSecurity.getFeedURL() != null)
-            security.setFeedURL(jSecurity.getFeedURL());
+            security.setFeedURL(trim(jSecurity.getFeedURL()));
         if (jSecurity.getLatestFeed() != null)
-            security.setLatestFeed(jSecurity.getLatestFeed());
+            security.setLatestFeed(trim(jSecurity.getLatestFeed()));
         if (jSecurity.getLatestFeedURL() != null)
-            security.setLatestFeedURL(jSecurity.getLatestFeedURL());
+            security.setLatestFeedURL(trim(jSecurity.getLatestFeedURL()));
 
         Map<Type, Map<String, String>> properties = jSecurity.getProperties();
         if (properties != null)
@@ -181,7 +191,8 @@ public class JsonSecurityExtractor implements Extractor
                     Optional<Classification> existingClassification = findClassification(taxonomy, key, name);
                     if (existingClassification.isPresent())
                     {
-                        existingClassification.get().addAssignment(new Assignment(security, jAssignment.getWeightValue()));
+                        existingClassification.get()
+                                        .addAssignment(new Assignment(security, jAssignment.getWeightValue()));
                     }
                     else
                     {
@@ -211,7 +222,7 @@ public class JsonSecurityExtractor implements Extractor
             return;
         }
 
-        // All without weight => equal weight
+        // All assignments without weight => equal weights
         if (assignments.stream().allMatch(a -> a.getWeight() == 0))
         {
             double weight = 100.0 / assignments.size();
@@ -219,10 +230,10 @@ public class JsonSecurityExtractor implements Extractor
             return;
         }
 
-        // Some with zero or negative weight => remove
+        // Some assignments with zero or negative weight => remove
         assignments.removeIf(a -> a.getWeight() <= 0.01);
 
-        // sum not 100% => adjust with factor
+        // sum of weights not 100% => adjust with factor
         Integer weightSum = assignments.stream().map(JTaxonomyAssignment::getWeightValue).reduce(0, Integer::sum);
         if (weightSum != Classification.ONE_HUNDRED_PERCENT)
         {
