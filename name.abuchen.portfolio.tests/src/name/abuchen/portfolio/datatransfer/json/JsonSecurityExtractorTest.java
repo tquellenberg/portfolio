@@ -239,6 +239,9 @@ public class JsonSecurityExtractorTest
                         classifications.get(1).getAssignments().get(0).getWeight());
         assertEquals(Classification.ONE_HUNDRED_PERCENT / 3,
                         classifications.get(2).getAssignments().get(0).getWeight());
+        
+        System.out.println(classifications.get(2).getAssignments().get(0).getWeight());
+        System.out.println(Classification.ONE_HUNDRED_PERCENT / 3);
     }
 
     @Test

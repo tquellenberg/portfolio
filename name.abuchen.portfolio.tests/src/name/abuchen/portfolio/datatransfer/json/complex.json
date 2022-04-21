@@ -35,12 +35,12 @@
 						{
 							"key": "country_US",
 							"name": "Vereinigte Staaten",
-							"weight": 9000
+							"weight": 90.0
 						},
 						{
 							"key": "RW2",
 							"name": "Europa \u0026 Mittlerer Osten",
-							"weight": 1000
+							"weight": 10.0
 						}
 					]
 				},
@@ -51,7 +51,7 @@
 						{
 							"key": "45",
 							"name": "Informationstechnologie",
-							"weight": 10000
+							"weight": 100.0
 						}
 					]
 				}

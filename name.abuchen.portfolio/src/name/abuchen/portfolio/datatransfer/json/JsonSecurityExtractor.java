@@ -181,7 +181,7 @@ public class JsonSecurityExtractor implements Extractor
                     Optional<Classification> existingClassification = findClassification(taxonomy, key, name);
                     if (existingClassification.isPresent())
                     {
-                        existingClassification.get().addAssignment(new Assignment(security, jAssignment.getWeight()));
+                        existingClassification.get().addAssignment(new Assignment(security, jAssignment.getWeightValue()));
                     }
                     else
                     {
@@ -207,31 +207,27 @@ public class JsonSecurityExtractor implements Extractor
         // Only one assignment => 100%
         if (assignments.size() == 1)
         {
-            assignments.get(0).setWeight(Classification.ONE_HUNDRED_PERCENT);
+            assignments.get(0).setWeight(100.0);
             return;
         }
 
         // All without weight => equal weight
         if (assignments.stream().allMatch(a -> a.getWeight() == 0))
         {
-            int weight = Classification.ONE_HUNDRED_PERCENT / assignments.size();
+            double weight = 100.0 / assignments.size();
             assignments.stream().forEach(a -> a.setWeight(weight));
             return;
         }
 
         // Some with zero or negative weight => remove
-        assignments.removeIf(a -> a.getWeight() <= 0);
+        assignments.removeIf(a -> a.getWeight() <= 0.01);
 
         // sum not 100% => adjust with factor
-        Integer weightSum = assignments.stream().map(JTaxonomyAssignment::getWeight).reduce(0, Integer::sum);
+        Integer weightSum = assignments.stream().map(JTaxonomyAssignment::getWeightValue).reduce(0, Integer::sum);
         if (weightSum != Classification.ONE_HUNDRED_PERCENT)
         {
             double factor = (double) Classification.ONE_HUNDRED_PERCENT / (double) weightSum;
-            for (JTaxonomyAssignment assignment : assignments)
-            {
-                int newWeight = (int) (assignment.getWeight() * factor);
-                assignment.setWeight(newWeight);
-            }
+            assignments.stream().forEach(a -> a.setWeight(a.getWeight() * factor));
         }
     }
 

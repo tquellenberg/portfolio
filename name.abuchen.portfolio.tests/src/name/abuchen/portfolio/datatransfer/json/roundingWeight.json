@@ -12,17 +12,17 @@
             {
               "key": "RW1",
               "name": "Amerikas",
-              "weight": 33
+              "weight": 33.3
             },
             {
               "key": "RW2",
               "name": "Europa",
-              "weight": 33
+              "weight": 33.3
             },
             {
               "key": "RW3",
               "name": "Pazifik",
-              "weight": 33
+              "weight": 33.3
             }
           ]
         }
