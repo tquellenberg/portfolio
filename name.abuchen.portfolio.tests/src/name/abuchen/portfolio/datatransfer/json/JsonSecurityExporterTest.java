@@ -80,7 +80,6 @@ public class JsonSecurityExporterTest
         JsonSecurityExporter exporter = new JsonSecurityExporter();
         String exportSecurityMetaData = exporter.exportSecurityMetaData(Collections.singletonList(security), taxonomies);
 
-        System.out.println(exportSecurityMetaData);
         assertEquals(json, exportSecurityMetaData);
     }
 

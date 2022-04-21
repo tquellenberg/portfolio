@@ -35,6 +35,8 @@ public class JSecurityMetaData
     private Map<String, Object> attributes;
 
     private List<JTaxonomy> taxonomies = new ArrayList<>();
+    
+    private Boolean isActive;
 
     public JSecurityMetaData(String isin, String name)
     {
@@ -72,6 +74,8 @@ public class JSecurityMetaData
 
         this.attributes = security.getAttributes().getMap();
         this.taxonomies.addAll(taxonomies);
+        
+        this.isActive = ! security.isRetired();
     }
 
     public String getOnlineId()
@@ -225,8 +229,19 @@ public class JSecurityMetaData
     {
         return properties;
     }
+    
     public void setProperties(Map<SecurityProperty.Type, Map<String, String>> properties)
     {
         this.properties = properties;
+    }
+
+    public Boolean getIsActive()
+    {
+        return isActive;
+    }
+    
+    public void setIsActive(Boolean isActive)
+    {
+        this.isActive = isActive;
     }
 }

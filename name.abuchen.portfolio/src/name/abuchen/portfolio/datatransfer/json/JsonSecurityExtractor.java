@@ -85,12 +85,15 @@ public class JsonSecurityExtractor implements Extractor
         for (JSecurityMetaData jSecurityMetaData : parseJson(fileReader, errors))
         {
             String isinToImport = jSecurityMetaData.getIsin();
-            if (!Strings.isNullOrEmpty(isinToImport))
+            String nameToImport = jSecurityMetaData.getName();
+            if (!Strings.isNullOrEmpty(isinToImport) && !Strings.isNullOrEmpty(nameToImport))
             {
-                Security s = securityCache.lookup(isinToImport, "", "", "", () -> {
+                Security s = securityCache.lookup(isinToImport, null, null, nameToImport, () -> {
+                    PortfolioLog.info(MessageFormat.format(
+                                    "Create new security ''{0}'' with ISIN ''{1}''.", //$NON-NLS-1$
+                                    nameToImport, isinToImport));
                     Security newSecurity = new Security();
                     newSecurity.setCurrencyCode(client.getBaseCurrency());
-                    newSecurity.setIsin(isinToImport);
                     return newSecurity;
                 });
 
@@ -146,7 +149,9 @@ public class JsonSecurityExtractor implements Extractor
             security.setLatestFeed(trim(jSecurity.getLatestFeed()));
         if (jSecurity.getLatestFeedURL() != null)
             security.setLatestFeedURL(trim(jSecurity.getLatestFeedURL()));
-
+        if (jSecurity.getIsActive() != null)
+            security.setRetired(! jSecurity.getIsActive());
+        
         Map<Type, Map<String, String>> properties = jSecurity.getProperties();
         if (properties != null)
         {
@@ -269,7 +274,7 @@ public class JsonSecurityExtractor implements Extractor
                 return Optional.of(classification);
         }
 
-        // Find by path
+        // Find by name
         if (!Strings.isNullOrEmpty(name))
             return taxonomy.getAllClassifications().stream().filter(c -> c.getName().equals(name)).findAny();
 

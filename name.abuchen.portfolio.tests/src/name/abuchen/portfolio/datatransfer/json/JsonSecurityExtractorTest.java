@@ -139,6 +139,15 @@ public class JsonSecurityExtractorTest
 
         assertEquals(0, securityMetaData.getTaxonomies().size());
     }
+    
+    @Test
+    public void parseTwoSecurities() {
+        List<JSecurityMetaData> parsed = extractor.parseJson(reader("multiple.json"), errors);
+        
+        assertEquals(2, parsed.size());
+        assertEquals("US0378331005", parsed.get(0).getIsin());
+        assertEquals("JP3435000009", parsed.get(1).getIsin());
+    }
 
     @Test
     public void parseSyntaxError()
@@ -308,7 +317,7 @@ public class JsonSecurityExtractorTest
     }
 
     @Test
-    public void updateSecurityFromCache() throws IOException
+    public void updateSecurityWithCache() throws IOException
     {
         // Existing Security
         Security s = new Security();
@@ -332,4 +341,31 @@ public class JsonSecurityExtractorTest
         Security updatedSecurity = client.getSecurities().get(0);
         assertEquals("Apple Inc", updatedSecurity.getName());
     }
+
+    @Test
+    public void importMultipleSecuritiesWithCache() throws IOException
+    {
+        SecurityCache securityCache = new SecurityCache(client);
+        
+        File tempFile = File.createTempFile(JsonSecurityExtractorTest.class.getSimpleName(), ".tmp");
+        tempFile.deleteOnExit();
+        InputStream resourceAsStream = JsonSecurityExtractorTest.class.getResourceAsStream("multiple.json");
+        OutputStream outStream = new FileOutputStream(tempFile);
+        resourceAsStream.transferTo(outStream);
+        outStream.close();
+     
+        List<Item> extract = extractor.extract(securityCache, new InputFile(tempFile), errors);
+        assertEquals(2, extract.size());
+        for (Item item : extract)
+        {
+            item.apply(new InsertAction(client), null);
+        }
+
+        List<Security> securities = client.getSecurities();
+        assertEquals(2, securities.size());
+
+        assertEquals("Apple Inc", securities.get(0).getName());
+        assertEquals("Sony", securities.get(1).getName());
+    }
+
 }
