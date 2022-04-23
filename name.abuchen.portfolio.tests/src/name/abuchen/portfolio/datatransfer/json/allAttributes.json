@@ -1,0 +1,21 @@
+{
+	"version": "1.0",
+	"type": "SecurityMetaData",
+	"securities": [
+		{
+			"isin": "US88579Y1010",
+			"name": "3M",
+			"currencyCode": "EUR",
+			"attributes": {
+				"ter": "123,00%",
+				"aa840e18-5cfd-418b-a46c-32c01ce0a792": "\u003e 140,00",
+				"acquisitionFee": "100,00%",
+				"managementFee": "50,00%",
+				"vendor": "Hallo",
+				"aum": "300.000",
+				"logo": "data:image/png;base64,iVBORw0KGgoAAAANSU"
+			},
+			"isActive": true
+		}
+	]
+}

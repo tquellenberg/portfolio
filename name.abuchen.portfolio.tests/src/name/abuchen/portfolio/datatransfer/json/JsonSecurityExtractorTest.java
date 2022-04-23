@@ -139,11 +139,12 @@ public class JsonSecurityExtractorTest
 
         assertEquals(0, securityMetaData.getTaxonomies().size());
     }
-    
+
     @Test
-    public void parseTwoSecurities() {
+    public void parseTwoSecurities()
+    {
         List<JSecurityMetaData> parsed = extractor.parseJson(reader("multiple.json"), errors);
-        
+
         assertEquals(2, parsed.size());
         assertEquals("US0378331005", parsed.get(0).getIsin());
         assertEquals("JP3435000009", parsed.get(1).getIsin());
@@ -283,7 +284,7 @@ public class JsonSecurityExtractorTest
         jsonSecurity.setNote(""); // Empty string
         jsonSecurity.setProperties(Collections.emptyMap()); // Not null but
                                                             // empty parameter
-        Map<String, Object> attributes = new HashMap<>();
+        Map<String, String> attributes = new HashMap<>();
         attributes.put("logo", "data:image/png;base64,iVBORw0KGgoAAAANSUhEU...");
         jsonSecurity.setAttributes(attributes);
 
@@ -317,6 +318,27 @@ public class JsonSecurityExtractorTest
     }
 
     @Test
+    public void multipleAttributes()
+    {
+        List<JSecurityMetaData> parseJson = extractor.parseJson(reader("allAttributes.json"), errors);
+
+        Security s = new Security();
+        extractor.importSecurityMetaData(parseJson.get(0), s, taxonomies);
+        
+        Attributes attributes = s.getAttributes();
+        
+        assertEquals("data:image/png;base64,iVBORw0KGgoAAAANSU", attributes.get(new AttributeType("logo")));
+        assertEquals(1.23, attributes.get(new AttributeType("ter")));
+        assertEquals(30000000L, attributes.get(new AttributeType("aum")));
+        assertEquals("Hallo", attributes.get(new AttributeType("vendor")));
+        assertEquals(1.0, attributes.get(new AttributeType("acquisitionFee")));
+        assertEquals(0.5, attributes.get(new AttributeType("managementFee")));
+        
+        // Not imported because uuid of attribute type is not stable and do not match with existing types.
+        assertNull(attributes.get(new AttributeType("aa840e18-5cfd-418b-a46c-32c01ce0a792")));
+    }
+
+    @Test
     public void updateSecurityWithCache() throws IOException
     {
         // Existing Security
@@ -327,14 +349,14 @@ public class JsonSecurityExtractorTest
         client.addSecurity(s);
 
         SecurityCache securityCache = new SecurityCache(client);
-        
+
         File tempFile = File.createTempFile(JsonSecurityExtractorTest.class.getSimpleName(), ".tmp");
         tempFile.deleteOnExit();
         InputStream resourceAsStream = JsonSecurityExtractorTest.class.getResourceAsStream("simple.json");
         OutputStream outStream = new FileOutputStream(tempFile);
         resourceAsStream.transferTo(outStream);
         outStream.close();
-     
+
         List<Item> extract = extractor.extract(securityCache, new InputFile(tempFile), errors);
         extract.get(0).apply(new InsertAction(client), null);
 
@@ -346,14 +368,14 @@ public class JsonSecurityExtractorTest
     public void importMultipleSecuritiesWithCache() throws IOException
     {
         SecurityCache securityCache = new SecurityCache(client);
-        
+
         File tempFile = File.createTempFile(JsonSecurityExtractorTest.class.getSimpleName(), ".tmp");
         tempFile.deleteOnExit();
         InputStream resourceAsStream = JsonSecurityExtractorTest.class.getResourceAsStream("multiple.json");
         OutputStream outStream = new FileOutputStream(tempFile);
         resourceAsStream.transferTo(outStream);
         outStream.close();
-     
+
         List<Item> extract = extractor.extract(securityCache, new InputFile(tempFile), errors);
         assertEquals(2, extract.size());
         for (Item item : extract)

@@ -31,7 +31,6 @@ import name.abuchen.portfolio.datatransfer.SecurityCache;
 import name.abuchen.portfolio.datatransfer.actions.InsertAction;
 import name.abuchen.portfolio.json.impl.LocalDateSerializer;
 import name.abuchen.portfolio.json.impl.LocalTimeSerializer;
-import name.abuchen.portfolio.model.AttributeType;
 import name.abuchen.portfolio.model.Classification;
 import name.abuchen.portfolio.model.Classification.Assignment;
 import name.abuchen.portfolio.model.Client;
@@ -89,8 +88,7 @@ public class JsonSecurityExtractor implements Extractor
             if (!Strings.isNullOrEmpty(isinToImport) && !Strings.isNullOrEmpty(nameToImport))
             {
                 Security s = securityCache.lookup(isinToImport, null, null, nameToImport, () -> {
-                    PortfolioLog.info(MessageFormat.format(
-                                    "Create new security ''{0}'' with ISIN ''{1}''.", //$NON-NLS-1$
+                    PortfolioLog.info(MessageFormat.format("Create new security ''{0}'' with ISIN ''{1}''.", //$NON-NLS-1$
                                     nameToImport, isinToImport));
                     Security newSecurity = new Security();
                     newSecurity.setCurrencyCode(client.getBaseCurrency());
@@ -150,8 +148,8 @@ public class JsonSecurityExtractor implements Extractor
         if (jSecurity.getLatestFeedURL() != null)
             security.setLatestFeedURL(trim(jSecurity.getLatestFeedURL()));
         if (jSecurity.getIsActive() != null)
-            security.setRetired(! jSecurity.getIsActive());
-        
+            security.setRetired(!jSecurity.getIsActive());
+
         Map<Type, Map<String, String>> properties = jSecurity.getProperties();
         if (properties != null)
         {
@@ -165,14 +163,7 @@ public class JsonSecurityExtractor implements Extractor
             }
         }
 
-        Map<String, Object> attributes = jSecurity.getAttributes();
-        if (attributes != null)
-        {
-            for (Map.Entry<String, Object> entry : attributes.entrySet())
-            {
-                security.getAttributes().put(new AttributeType(entry.getKey()), entry.getValue());
-            }
-        }
+        importAttributes(jSecurity, security);
 
         for (JTaxonomy jTaxonomy : jSecurity.getTaxonomies())
         {
@@ -211,6 +202,20 @@ public class JsonSecurityExtractor implements Extractor
             {
                 PortfolioLog.warning(MessageFormat.format("Taxonomy with key ''{0}'' name ''{1}'' not found.", //$NON-NLS-1$
                                 jTaxonomy.getKey(), jTaxonomy.getName()));
+            }
+        }
+    }
+
+    private void importAttributes(JSecurityMetaData jSecurity, Security security)
+    {
+        Map<String, String> attributes = jSecurity.getAttributes();
+        if (attributes != null)
+        {
+            for (Map.Entry<String, String> entry : attributes.entrySet())
+            {
+                client.getSettings().getAttributeTypes().filter(at -> at.getId().equals(entry.getKey())).findAny()
+                                .ifPresent(at -> security.getAttributes().put(at,
+                                                at.getConverter().fromString(entry.getValue())));
             }
         }
     }

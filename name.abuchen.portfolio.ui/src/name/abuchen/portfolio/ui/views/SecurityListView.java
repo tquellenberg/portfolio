@@ -422,7 +422,7 @@ public class SecurityListView extends AbstractFinanceView
                     return;
 
                 String json = new JsonSecurityExporter().exportSecurityMetaData(securitiesToExport,
-                                getClient().getTaxonomies());
+                                getClient().getTaxonomies(), getClient().getSettings());
                 try
                 {
                     Files.writeString(new File(name).toPath(), json, StandardCharsets.UTF_8, StandardOpenOption.CREATE,

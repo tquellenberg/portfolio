@@ -1,13 +1,9 @@
 package name.abuchen.portfolio.datatransfer.json;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import name.abuchen.portfolio.model.Security;
 import name.abuchen.portfolio.model.SecurityProperty;
 
 public class JSecurityMetaData
@@ -32,50 +28,16 @@ public class JSecurityMetaData
     private String latestFeedURL;
 
     private Map<SecurityProperty.Type, Map<String, String>> properties;
-    private Map<String, Object> attributes;
+    private Map<String, String> attributes;
 
-    private List<JTaxonomy> taxonomies = new ArrayList<>();
-    
+    private List<JTaxonomy> taxonomies;
+
     private Boolean isActive;
 
     public JSecurityMetaData(String isin, String name)
     {
         this.isin = isin;
         this.name = name;
-    }
-
-    public JSecurityMetaData(Security security, List<JTaxonomy> taxonomies)
-    {
-        this.onlineId = security.getOnlineId();
-        this.name = security.getName();
-        this.currencyCode = security.getCurrencyCode();
-        this.targetCurrencyCode = security.getTargetCurrencyCode();
-        this.note = security.getNote();
-        this.isin = security.getIsin();
-        this.tickerSymbol = security.getTickerSymbol();
-        this.wkn = security.getWkn();
-        this.calendar = security.getCalendar();
-        this.feed = security.getFeed();
-        this.feedURL = security.getFeedURL();
-        this.latestFeed = security.getLatestFeed();
-        this.latestFeedURL = security.getLatestFeedURL();
-
-        this.properties = new HashMap<>();
-        for (SecurityProperty.Type type : SecurityProperty.Type.values())
-        {
-            Map<String, String> map = security.getProperties() //
-                            .filter(p -> p.getType() == type) //
-                            .collect(Collectors.toMap(SecurityProperty::getName, SecurityProperty::getValue));
-            if (!map.isEmpty())
-            {
-                properties.put(type, map);
-            }
-        }
-
-        this.attributes = security.getAttributes().getMap();
-        this.taxonomies.addAll(taxonomies);
-        
-        this.isActive = ! security.isRetired();
     }
 
     public String getOnlineId()
@@ -175,12 +137,17 @@ public class JSecurityMetaData
         return taxonomies;
     }
 
-    public Map<String, Object> getAttributes()
+    public void setTaxonomies(List<JTaxonomy> taxonomies)
+    {
+        this.taxonomies = taxonomies;
+    }
+
+    public Map<String, String> getAttributes()
     {
         return attributes;
     }
 
-    public void setAttributes(Map<String, Object> attributes)
+    public void setAttributes(Map<String, String> attributes)
     {
         this.attributes = attributes;
     }
@@ -224,12 +191,12 @@ public class JSecurityMetaData
     {
         this.latestFeedURL = latestFeedURL;
     }
-    
+
     public Map<SecurityProperty.Type, Map<String, String>> getProperties()
     {
         return properties;
     }
-    
+
     public void setProperties(Map<SecurityProperty.Type, Map<String, String>> properties)
     {
         this.properties = properties;
@@ -239,7 +206,7 @@ public class JSecurityMetaData
     {
         return isActive;
     }
-    
+
     public void setIsActive(Boolean isActive)
     {
         this.isActive = isActive;

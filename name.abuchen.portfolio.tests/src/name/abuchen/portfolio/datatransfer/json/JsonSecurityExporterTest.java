@@ -8,14 +8,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.io.Resources;
 
+import name.abuchen.portfolio.model.AttributeType;
+import name.abuchen.portfolio.model.AttributeType.LimitPriceConverter;
+import name.abuchen.portfolio.model.Attributes;
 import name.abuchen.portfolio.model.Classification;
+import name.abuchen.portfolio.model.Classification.Assignment;
+import name.abuchen.portfolio.model.Client;
+import name.abuchen.portfolio.model.LimitPrice;
+import name.abuchen.portfolio.model.LimitPrice.RelationalOperator;
 import name.abuchen.portfolio.model.Security;
 import name.abuchen.portfolio.model.Taxonomy;
-import name.abuchen.portfolio.model.Classification.Assignment;
 
 public class JsonSecurityExporterTest
 {
@@ -23,6 +30,14 @@ public class JsonSecurityExporterTest
     private Taxonomy taxonomy1;
     private Classification classification31;
     private Classification classification32;
+
+    private Client client;
+
+    @Before
+    public void setuo()
+    {
+        client = new Client();
+    }
 
     private List<Taxonomy> buildTaxonomies()
     {
@@ -78,7 +93,39 @@ public class JsonSecurityExporterTest
         classification32.addAssignment(new Assignment(security, 1000));
 
         JsonSecurityExporter exporter = new JsonSecurityExporter();
-        String exportSecurityMetaData = exporter.exportSecurityMetaData(Collections.singletonList(security), taxonomies);
+        String exportSecurityMetaData = exporter.exportSecurityMetaData(Collections.singletonList(security), taxonomies,
+                        client.getSettings());
+
+        assertEquals(json, exportSecurityMetaData);
+    }
+
+    @Test
+    public void exportSecurityAttributes() throws IOException
+    {
+        String json = Resources.toString(JsonSecurityExporterTest.class.getResource("withAttribute.json"),
+                        StandardCharsets.UTF_8);
+
+        Security security = new Security("Apple Inc", "US0378331005", "APC.DE", null);
+        security.setCurrencyCode("EUR");
+        security.setNote("Meine Anmerkungen...");
+        security.setWkn("");
+
+        AttributeType attributeType = new AttributeType("b918a6df-aa5d-4b10-8cde-8adf7e10bfd2");
+        attributeType.setName("Limit");
+        attributeType.setColumnLabel("Limt");
+        attributeType.setConverter(LimitPriceConverter.class);
+        attributeType.setType(LimitPrice.class);
+        attributeType.setTarget(Security.class);
+
+        client.getSettings().addAttributeType(attributeType);
+
+        Attributes attributes = new Attributes();
+        attributes.put(attributeType, new LimitPrice(RelationalOperator.GREATER, 14000000000L));
+        security.setAttributes(attributes);
+
+        JsonSecurityExporter exporter = new JsonSecurityExporter();
+        String exportSecurityMetaData = exporter.exportSecurityMetaData(Collections.singletonList(security),
+                        Collections.emptyList(), client.getSettings());
 
         assertEquals(json, exportSecurityMetaData);
     }
